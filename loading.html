@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Archive Transfer</title>
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/loading.css">
+</head>
+<body>
+  <main class="screen">
+    <section class="core">
+      <div class="topline">
+        <div class="dots">
+          <span class="dot"></span>
+          <span class="dot"></span>
+          <span class="dot"></span>
+        </div>
+        <span>Transfer Sequence / Loading</span>
+      </div>
+
+      <h1 class="headline">Connecting To Archive</h1>
+      <div class="subline">Guest route accepted / preparing dashboard node</div>
+
+      <div class="bar-wrap">
+        <div class="bar-meta">
+          <span>Transfer Progress</span>
+          <span id="progressText">0%</span>
+        </div>
+        <div class="bar">
+          <div class="progress" id="progressBar"></div>
+        </div>
+      </div>
+
+      <div class="statusline">
+        <span>status / <strong id="statusMain">initializing</strong></span>
+        <span>error / <strong id="statusError">none</strong></span>
+        <span>node / <strong>archive-01</strong></span>
+      </div>
+
+      <div class="log-box" id="logBox"></div>
+
+      <div class="foot">
+        <span>visual transition only</span>
+        <span>forwarding to dashboard</span>
+      </div>
+    </section>
+  </main>
+<script src="js/loading.js"></script>
+</body>
+</html>

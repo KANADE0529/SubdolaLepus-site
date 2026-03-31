@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>角色檔案</title>
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/character-profile.css">
+</head><body class="grid-overlay">
+
+  <main class="page">
+<div class="top">
+  <div class="tag-wrap">
+    <button class="tag back-btn" onclick="location.href='character-list.html'">← BACK</button>
+    <span class="tag">Module / Character</span>
+    <span class="tag">Profile</span>
+  </div>
+
+  <div class="tag-wrap">
+    <span class="tag">Status / Synced</span>
+  </div>
+</div>
+    <div class="system-bar">
+      <div class="system-left">
+        <span class="pill">Character Archive</span>
+        <span class="pill">Report View</span>
+      </div>
+      <div class="system-right">
+        <span class="pill">Clearance: L-02</span>
+        <span class="pill">Status: Synced</span>
+      </div>
+    </div>
+
+    <section class="hero">
+      <div class="hero-top">
+        <div>
+          <div class="eyebrow" id="entryCode">Subject Report / Entry ---</div>
+          <h1 id="characterName">角色名稱 / NAME</h1>
+
+          <div class="hero-meta">
+            <span class="pill" id="jobText">職業：---</span>
+            <span class="pill" id="campText">陣營：---</span>
+          </div>
+
+          <p class="hero-summary" id="summaryText">
+            角色介紹載入中...
+          </p>
+        </div>
+
+        <aside class="status-box">
+          <div class="status-row"><span>狀態</span><span class="status-value" id="statusText">---</span></div>
+          <div class="status-row"><span>危險度</span><span class="status-value" id="dangerText">---</span></div>
+          <div class="status-row"><span>記錄編號</span><span class="status-value" id="recordText">---</span></div>
+        </aside>
+      </div>
+
+      <div class="symbol-line">
+        <span>Symbol Color</span>
+        <div class="symbol-swatch" id="symbolSwatch"></div>
+      </div>
+    </section>
+
+    <section class="layout">
+      <section class="panel">
+        <div class="section-title">基本資料</div>
+
+        <div class="portrait">
+          <img id="portraitImage" src="" alt="角色立繪" style="width:100%;height:100%;object-fit:cover;">
+        </div>
+
+        <div class="data-list">
+          <div class="data-item">
+            <div class="label">姓名</div>
+            <div class="value" id="profileName">---</div>
+          </div>
+          <div class="data-item">
+            <div class="label">年齡</div>
+            <div class="value" id="profileAge">---</div>
+          </div>
+          <div class="data-item">
+            <div class="label">身高</div>
+            <div class="value" id="profileHeight">---</div>
+          </div>
+          <div class="data-item">
+            <div class="label">身分</div>
+            <div class="value" id="profileIdentity">---</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="section-title">分析紀錄</div>
+
+        <div class="analysis-grid">
+          <div class="subpanel">
+            <div class="subhead">角色描述</div>
+            <p class="body-text" id="descriptionText">---</p>
+          </div>
+
+          <div class="subpanel">
+            <div class="subhead">特徵標籤</div>
+            <div class="chips" id="tagList"></div>
+          </div>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script src="js/character-profile.js"></script>
+</body>
+</html>

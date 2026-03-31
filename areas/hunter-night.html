@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>獵者之夜</title>
+  <style>
+    :root {
+      --bg: #070b12;
+      --panel: rgba(12, 11, 14, 0.96);
+      --panel-2: rgba(18, 14, 13, 0.92);
+      --frame: rgba(220, 120, 48, 0.24);
+      --frame-soft: rgba(255, 180, 120, 0.08);
+      --text-main: #fff3ea;
+      --text-soft: rgba(255, 220, 198, 0.62);
+      --text-dim: rgba(255, 210, 185, 0.42);
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      background: var(--bg);
+      color: var(--text-main);
+      font-family: Arial, "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+    }
+
+    body {
+      position: relative;
+      overflow: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      opacity: 0.12;
+      background-image:
+        linear-gradient(rgba(255,140,60,.18) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,140,60,.18) 1px, transparent 1px),
+        linear-gradient(rgba(255,140,60,.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,140,60,.06) 1px, transparent 1px);
+      background-size: 36px 36px, 36px 36px, 12px 12px, 12px 12px;
+      pointer-events: none;
+    }
+
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(circle at top left, rgba(200,90,28,.18), transparent 26%),
+        radial-gradient(circle at top right, rgba(255,150,80,.10), transparent 20%),
+        radial-gradient(circle at bottom, rgba(140,50,10,.14), transparent 30%);
+      pointer-events: none;
+      mix-blend-mode: screen;
+    }
+
+    .page {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 28px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .log-panel {
+      position: relative;
+      width: min(1180px, 100%);
+      min-height: 680px;
+      max-height: calc(100vh - 56px);
+      display: grid;
+      grid-template-rows: auto 1fr;
+      border-radius: 28px;
+      overflow: hidden;
+      border: 1px solid var(--frame);
+      background: linear-gradient(180deg, rgba(14,12,14,.98), rgba(8,9,12,.98));
+      box-shadow: 0 0 0 1px var(--frame-soft) inset, 0 0 72px rgba(120,40,10,.32);
+    }
+
+    .log-panel::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,140,60,.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,140,60,.08) 1px, transparent 1px);
+      background-size: 18px 18px;
+      opacity: .24;
+      pointer-events: none;
+    }
+
+    .log-header {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 20px 24px;
+      border-bottom: 1px solid rgba(220,120,48,.18);
+      background: linear-gradient(90deg, rgba(200,90,28,.12), rgba(0,0,0,0));
+    }
+
+    .log-kicker {
+      font-size: 11px;
+      letter-spacing: .34em;
+      text-transform: uppercase;
+      color: rgba(240,176,138,.52);
+    }
+
+    .log-area-title {
+      margin: 8px 0 4px;
+      font-size: 30px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      color: var(--text-main);
+      text-shadow: 0 0 18px rgba(255,120,48,.12);
+    }
+
+    .log-area-subtitle {
+      font-size: 12px;
+      letter-spacing: .24em;
+      text-transform: uppercase;
+      color: rgba(255,210,185,.52);
+    }
+
+    .log-close {
+      width: 44px;
+      height: 44px;
+      border: 1px solid rgba(220,120,48,.22);
+      border-radius: 14px;
+      background: rgba(18,14,13,.88);
+      color: #ffe9dc;
+      font-size: 20px;
+      box-shadow: 0 0 0 1px rgba(255,170,120,.05) inset;
+      cursor: pointer;
+    }
+
+    .log-close:hover {
+      border-color: rgba(255,170,120,.4);
+      box-shadow: 0 0 12px rgba(255,140,60,.2);
+    }
+
+    .log-body {
+      position: relative;
+      z-index: 1;
+      min-height: 0;
+      display: grid;
+      grid-template-columns: 260px 1fr;
+    }
+
+    .log-sidebar {
+      padding: 18px;
+      border-right: 1px solid rgba(220,120,48,.14);
+      background: linear-gradient(180deg, rgba(20,14,12,.84), rgba(12,11,13,.74));
+      overflow: auto;
+    }
+
+    .log-view-switch {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .log-view-btn {
+      width: 100%;
+      padding: 10px 0;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: .08em;
+      border-radius: 12px;
+      border: 1px solid rgba(220,120,48,.18);
+      background: rgba(24,16,13,.6);
+      color: var(--text-soft);
+      cursor: pointer;
+      transition: all .18s ease;
+      position: relative;
+      overflow: hidden;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    .log-view-btn.active {
+      background: rgba(120,48,18,.7);
+      color: var(--text-main);
+      border-color: rgba(255,170,100,.4);
+      box-shadow: 0 0 10px rgba(200,90,28,.2);
+      transform: translateY(-1px);
+    }
+
+    .locked-view-btn {
+      color: rgba(255, 190, 170, 0.82);
+      border-color: rgba(255, 110, 90, 0.24);
+      background: linear-gradient(180deg, rgba(70,18,18,.55), rgba(28,10,10,.62));
+      text-shadow: 0 0 8px rgba(255, 90, 70, 0.18);
+    }
+
+    .locked-view-btn:hover {
+      border-color: rgba(255, 120, 95, 0.42);
+      box-shadow: 0 0 14px rgba(255, 90, 70, 0.14);
+    }
+
+    .locked-view-btn.denied {
+      color: #ffd8ce;
+      border-color: rgba(255, 130, 110, 0.55);
+      background: linear-gradient(180deg, rgba(120,30,24,.72), rgba(48,14,12,.78));
+      box-shadow: 0 0 18px rgba(255, 90, 70, 0.22);
+      letter-spacing: .08em;
+    }
+
+    .log-sidebar-title {
+      margin: 0 0 14px;
+      font-size: 11px;
+      letter-spacing: .28em;
+      text-transform: uppercase;
+      color: rgba(255,210,185,.48);
+    }
+
+    .log-episode-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .log-episode-btn {
+      width: 100%;
+      text-align: left;
+      padding: 14px 14px 13px;
+      border: 1px solid rgba(220,120,48,.12);
+      border-radius: 16px;
+      background: rgba(24,16,13,.72);
+      color: #ffece1;
+      cursor: pointer;
+      transition: border-color .18s ease, background .18s ease, transform .18s ease, box-shadow .18s ease;
+    }
+
+    .log-episode-btn:hover {
+      transform: translateY(-1px);
+      border-color: rgba(255,160,90,.34);
+      background: rgba(54,28,17,.78);
+    }
+
+    .log-episode-btn.active {
+      border-color: rgba(255,170,100,.42);
+      background: linear-gradient(180deg, rgba(120,48,18,.68), rgba(54,24,15,.82));
+      box-shadow: 0 0 18px rgba(200,90,28,.18);
+    }
+
+    .log-episode-no {
+      display: block;
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      color: var(--text-main);
+    }
+
+    .log-episode-label {
+      display: block;
+      margin-top: 6px;
+      font-size: 11px;
+      letter-spacing: .18em;
+      color: var(--text-soft);
+    }
+
+    .log-content {
+      padding: 24px 28px 28px;
+      overflow-y: auto;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    .log-content-head {
+      padding-bottom: 16px;
+      border-bottom: 1px solid rgba(220,120,48,.12);
+      margin-bottom: 18px;
+    }
+
+    .log-entry-kicker {
+      font-size: 11px;
+      letter-spacing: .28em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+    }
+
+    .log-entry-title {
+      margin: 10px 0 0;
+      font-size: 24px;
+      letter-spacing: .06em;
+      color: var(--text-main);
+    }
+
+    .log-entry-text {
+      white-space: pre-wrap;
+      line-height: 2.05;
+      color: rgba(255,236,224,.82);
+      font-size: 17px;
+    }
+
+    .log-content.is-switching .log-content-head,
+    .log-content.is-switching .log-entry-text {
+      animation: viewSwapFade .32s ease;
+    }
+
+    .log-content.is-switching::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: linear-gradient(90deg, transparent 0%, rgba(255,140,60,.08) 48%, rgba(255,220,190,.18) 50%, rgba(255,140,60,.08) 52%, transparent 100%);
+      mix-blend-mode: screen;
+      animation: viewScan .32s ease;
+    }
+
+    .log-panel.locked {
+      animation: lockedFlash 0.4s ease;
+    }
+
+    @keyframes lockedFlash {
+      0% { filter: brightness(1); transform: translateX(0); }
+      20% { filter: brightness(1.6); transform: translateX(-3px); }
+      40% { filter: brightness(0.7); transform: translateX(3px); }
+      60% { filter: brightness(1.4); transform: translateX(-2px); }
+      100% { filter: brightness(1); transform: translateX(0); }
+    }
+
+    @keyframes viewSwapFade {
+      0% { opacity: .2; transform: translateY(8px); filter: blur(4px); }
+      55% { opacity: .82; transform: translateY(0); filter: blur(1px); }
+      100% { opacity: 1; transform: translateY(0); filter: blur(0); }
+    }
+
+    @keyframes viewScan {
+      0% { opacity: 0; transform: translateX(-28%); }
+      30% { opacity: .85; }
+      100% { opacity: 0; transform: translateX(28%); }
+    }
+
+    @media (max-width: 900px) {
+      .page { padding: 14px; }
+      .log-panel {
+        min-height: auto;
+        max-height: calc(100vh - 28px);
+      }
+      .log-body {
+        grid-template-columns: 1fr;
+      }
+      .log-sidebar {
+        max-height: 220px;
+        border-right: 0;
+        border-bottom: 1px solid rgba(220,120,48,.14);
+      }
+      .log-view-switch {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="log-panel" role="dialog" aria-modal="true" aria-labelledby="logAreaTitle">
+      <header class="log-header">
+        <div>
+          <div class="log-kicker">Operation Log</div>
+          <h1 class="log-area-title" id="logAreaTitle">獵者之夜</h1>
+          <div class="log-area-subtitle" id="logAreaSubtitle">Hunter Night</div>
+        </div>
+        <button class="log-close" id="closeBtn" type="button" aria-label="關閉">×</button>
+      </header>
+
+      <div class="log-body">
+        <aside class="log-sidebar">
+          <div class="log-view-switch" id="logViewSwitch"></div>
+          <h2 class="log-sidebar-title">檔案索引</h2>
+          <div class="log-episode-list" id="logEpisodeList"></div>
+        </aside>
+
+        <article class="log-content">
+          <div class="log-content-head">
+            <div class="log-entry-kicker" id="logEntryKicker">共通紀錄</div>
+            <h2 class="log-entry-title" id="logEntryTitle">01｜夜間紀錄</h2>
+          </div>
+          <div class="log-entry-text" id="logEntryText"></div>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <script>
+ const LOG_PREVIEW_DATA = {
+  "area": "獵者之夜",
+  "subtitle": "hunter night",
+  "viewGroups": [
+    {
+      "id": "yan",
+      "label": "姜燕"
+    },
+    {
+      "id": "area-extra",
+      "label": "綜合故事"
+    }
+  ],
+  "episodes": [
+    {
+      "no": "【番外】",
+      "label": "康復後的第一堂課",
+      "availableViews": [
+        "area-extra"
+      ],
+      "content": {
+        "yan": "無。",
+        "area-extra": "　　「首先，恭喜妳終於康復了，戴莉同學。」瑪莉亞抬了抬眼鏡……正確來說就是個鏡框，瑪莉亞的眼力相當好(？)，上次檢查仍舊擁有2.0的絕佳視力——雖然只有左眼就是了。\n　　「謝，但是為什麼我要在這裡？」戴莉的臉上還有一個鮮紅的掌印，那是五分鐘前瑪莉亞“親切”的印上去、為了表達自身對她的擔心的證明。\n　　「戴莉終於能跟我們一起出任務了！好開心！」姜燕在位置上開心的揮著手，像是剛上學的小學生。\n　　「妳高興的話為什麼她剛剛打我一巴掌妳不阻止她？啊？說個理由來聽聽啊？」戴莉憤恨的轉頭瞪她，雖然瑪莉亞用盡全力的一掌只是有點痛而已，但掌印還是確實留下了。\n　　「啊……這個……」姜燕心虛的眼神閃爍，手指不安的交織著擺動，吞吞吐吐的開口:「瑪莉亞說如果我阻止的話就連我一起打……」\n　　「她力氣那麼小妳到底在怕什麼鬼？」戴莉不滿的站起來戳著姜燕的腦袋：「她就算一拳打過來受傷都不會，妳怕什麼？她打妳妳就抓住她的手把她甩出去啊？」\n　　「上次不就用了權能把戴莉打成全身骨折了不是嗎……」姜燕越說越小聲:「所以我不敢惹瑪莉亞生氣嘛……」\n　　「……」\n　　戴莉講不出話了，要是瑪莉亞浪費權能給自己一巴掌今天再飛出去一次的會是她，想完、她坐了回去撐著臉：「快點，又要做什麼？」\n　　「非常謝謝兩位的賞臉，那麼我們來開始最重要的課程吧。」\n　　現在地為夜梟小隊使用的教學室，雖然位置不多但是三個人使用已經綽綽有餘了。\n　　「妳們認為這次殉教者山丘任務失敗的最主要原因是什麼？」瑪莉亞凌冽的目光在兩人身上來回移動，最後指著戴莉：「戴莉同學，妳來回答。」\n　　「我怎麼知道？而且這次任務哪裡失敗了？」戴莉沒好氣的說：「實力不夠？妳們不夠努力？亂開狂犬和權能？」\n　　「雖然這些都是原因，但最主要的不是這個。」瑪莉亞搖搖頭，直直看向戴莉的紫眸、非常認真的開口：「原因是妳不夠相信我和姜燕。」\n　　「妳沒有和我們談過、也沒有透露半點消息就自己跑出去找火焰王之女，才會導致後來的情況。」瑪莉亞語氣有些沉重，裡面帶著悲傷以及幾乎微不可察的失望：「要是妳開口的話，很可能後面的事情不會發生、就算還是發生了我們也能夠定制對策，妳懂嗎？」\n　　「……」\n　　戴莉啞口無言，撇著嘴將眼神和目光轉向旁邊，明顯她現在是知錯的、但她不想直接承認。\n　　面對這樣的戴莉，瑪莉亞早就習慣了，她熟悉的戴莉是絕對不會輕易開口道歉的人，所以這樣的態度完全在預測內。\n　　「不過這次的事情也給了我們各自很大的學習空間，所以我希望之後我們可以有什麼煩惱都說出來。」\n　　「我什麼都會跟瑪莉亞說的！」姜燕舉手高聲回答：「我世界上最相信瑪莉亞、戴莉和美英監督了！」\n　　「是是是，我知道的。」瑪莉亞點點頭，有些好笑的嘆氣。\n　　姜燕腦子單純，基本上藏不住什麼秘密，雖然大部分時候這是好處、但有時候更要小心不能讓她知道太多。\n　　「那妳敢保證妳就沒有藏著什麼秘密嗎？」戴莉叉腰，露出狡詐的笑：「像妳這種秘密那麼多的人不可能什麼都沒藏吧？」\n　　瑪莉亞感覺有什麼被卡在喉嚨裡，要說秘密的話她當然有、而且是打死都不會說的秘密，但她在停頓了半秒後理直氣壯的回：「有又怎樣？我說的是煩惱！我是希望大家不要總是想著自己解決，多依賴身邊的人。」\n　　「好、都給妳說就行了。」戴莉聳肩，沒有表示反對，更多的是她知道這次自己理虧。\n　　「那我最大的煩惱應該是戴莉和瑪莉亞會不會討厭我了。」姜燕說，趴在桌上露出苦惱的樣子：「要是有天戴莉和瑪莉亞討厭我了怎麼辦？」\n　　「不用等有天，我就沒喜歡過妳。」戴莉撇嘴，有時候她真的恨透姜燕這白癡，但根本是麻煩製造機，而且生活完全不能自理。\n　　「真的嗎？戴莉一直都很討厭我嗎？」戴莉的背後傳來啜泣聲，姜燕的眼淚化為珍珠一顆一顆掉的桌上：「我做了什麼嗎？我可以改的，拜託戴莉不要討厭我好不好？」\n　　持續的哭聲讓戴莉很頭痛，她轉身過去戳姜燕的腦袋，怒氣快要壓不住：「我就討厭妳這個動不動就很白癡的臉跟腦袋！妳能換掉再跟我說話！」\n　　「好了啦，戴莉妳也不要說那麼過分的話。」瑪莉亞走過去抱住姜燕，摸了摸她的腦袋安撫她：「戴莉本來就這脾氣而且口是心非的，妳不要太在乎她說話啦。她根本不討厭妳，不然怎麼每天晚上都一起睡覺、對不對？」\n　　「真的嗎？」姜燕蓄滿淚水的眼睛看向她，戴莉咬了咬牙最後吐出兩個字：「隨便。」\n　　「她說對。」瑪莉亞翻譯。\n　　「……」戴莉不知道是怒意還是害羞，重重的錘了一下桌子起身，轉頭就從教學室出去。\n　　瑪莉亞在她身後喊：「喂，剛剛說的妳到底有沒有聽進去？」\n　　「聽三小聽？等妳是我媽的時候再來講啦！我媽都沒管過我了！」\n　　「講的像妳有一樣！」瑪莉亞嘴角帶笑，高聲刺激走出去的戴莉：「我們三個誰出生有媽？」\n　　「瑪莉亞·薩圖恩妳她媽——」暴怒的戴莉聲音由遠及近、最後門被甩開，戴莉紅著臉準備開罵，但又戛然而止：「妳今天想打一架我……」\n　　瑪莉亞兩眼看著她、至高的圖紋隱隱浮現在眼角，鼻子流出一行血、用玩味的笑容直直看著她。\n　　姜燕縮在瑪莉亞身後抓著她的衣角看起來已經被嚇死了。\n　　「行，女人妳行。」戴莉收了收因憤怒而漲紅了臉色，雖然沒完全退去，但是表情已經變得冷靜：「現在開始妳是我媽，我什麼都聽妳的，可以吧？」\n　　隨後從腰包中丟了一包衛生紙到她旁的桌上，擺著臉色坐了下來。\n　　「我、我就說不要讓瑪莉亞生氣吧……」姜燕小聲的說，隨後得到了戴莉的怒瞪。\n　　「只要妳通情理就好。」瑪莉亞收起全能拿衛生紙把鼻血擦了擦，像是無事發生一樣:「我希望我們之間可以好好溝通，不要再發生不必要的傷害，畢竟我們是一個團隊的。」\n　　「姜燕也是，有什麼煩惱都要跟我們說喔，不要一個人解決。」她揉了揉姜燕的腦袋，她眼角還掛著淚珠、瘋狂點頭。\n　　「哼。」戴莉撇過臉，用默認當作回應。\n　　「啊，妳們都在這裡啊？」姜美英找了整個城堡終於在教學室找到了三個人，她看著氣氛詭異的三人摸不著頭腦，但看起來也沒打架就不想管了：「今天戴莉要健康檢查回診，既然你們三個都在的話就順便一起去做檢查吧。」\n　　「尤其是瑪莉亞，妳可是差點死了，不可以耍賴！燕、戴莉，妳們兩個把她抓過去，牢牢抓緊知道嗎？」\n　　「哈！這我就非常願意做了。」戴莉彷彿重新掌握主權一樣露出平時狡猾的笑，對姜燕發出指令：「姜燕！抓好瑪莉亞的腳！」\n　　「等等、我很健康根本就不需要什麼檢查……姜燕，鬆開我！」瑪莉亞想跑的時候已經來不及了，姜燕動手很快、直接抓住她的雙腿不給她飛起來的機會，戴莉則趁機扛起瑪莉亞，瑪莉亞奮力掙扎：「戴莉！我、我才不要做什麼健康檢查！我很健康！聽到了沒有，我很健康啊！」\n　　「聽不見、我什麼都聽不見。」礙於瑪莉亞力氣小的可憐，她的掙扎幾乎不見效果，她望著戴莉因嘲笑揚起的眼角，露出楚楚可憐、對姜燕幾乎百分百有效的亮晶晶目光：「……戴媽媽？」\n　　「妳今天叫我爸都沒用。」戴莉紋絲不動，和姜燕扛著瑪莉亞離開。\n　　「至少不要打針、不要抽血檢查，好不好？」\n　　「那又不是我說了算，但按照平時檢查、妳八成得抽血。」\n　　「不要啦！我不要抽血啦！」\n　　「我不要啦——！」"
+      }
+    }
+  ]
+};
+
+    function getEpisodeViews(episode) {
+      return episode?.content ?? {};
+    }
+
+    let currentEpisodeIndex = 0;
+    let currentViewId = 'yan';
+    let switchAnimationTimer = null;
+
+    function playLockedAnimation() {
+      const panel = document.querySelector('.log-panel');
+      panel?.classList.add('locked');
+
+      setTimeout(() => {
+        panel?.classList.remove('locked');
+      }, 400);
+    }
+
+ 
+
+    function renderViewSwitch() {
+      const container = document.getElementById('logViewSwitch');
+      container.innerHTML = '';
+
+      const episode = LOG_PREVIEW_DATA.episodes[currentEpisodeIndex];
+      const availableViews = episode?.availableViews ?? LOG_PREVIEW_DATA.viewGroups.map(v => v.id);
+
+      const visibleGroups = LOG_PREVIEW_DATA.viewGroups.filter(group =>
+        availableViews.includes(group.id)
+      );
+
+      if (!availableViews.includes(currentViewId) && visibleGroups.length > 0) {
+        currentViewId = visibleGroups[0].id;
+      }
+
+      visibleGroups.forEach(group => {
+        const btn = document.createElement('button');
+        btn.className = 'log-view-btn' + (group.id === currentViewId ? ' active' : '');
+        btn.textContent = group.label;
+
+        if (group.id === 'unknown') {
+          btn.classList.add('locked-view-btn');
+        }
+
+        btn.addEventListener('click', () => {
+          if (group.id === 'unknown') {
+            playLockedAnimation();
+            playDeniedText(btn);
+            return;
+          }
+
+          if (currentViewId === group.id) return;
+
+          currentViewId = group.id;
+          renderEpisodeContent(currentEpisodeIndex);
+          playViewSwitchAnimation();
+        });
+
+        container.appendChild(btn);
+      });
+    }
+
+    function playViewSwitchAnimation() {
+      const contentEl = document.querySelector('.log-content');
+      if (!contentEl) return;
+
+      contentEl.classList.remove('is-switching');
+      void contentEl.offsetWidth;
+      contentEl.classList.add('is-switching');
+
+      clearTimeout(switchAnimationTimer);
+      switchAnimationTimer = setTimeout(() => {
+        contentEl.classList.remove('is-switching');
+      }, 340);
+    }
+
+    function renderEpisodeContent(episodeIndex) {
+      currentEpisodeIndex = episodeIndex;
+      const episode = LOG_PREVIEW_DATA.episodes[episodeIndex];
+      if (!episode) return;
+
+      renderViewSwitch();
+
+      const contentMap = getEpisodeViews(episode);
+      const content = contentMap[currentViewId] ?? '此視角尚無內容。';
+
+      const groupLabel = LOG_PREVIEW_DATA.viewGroups.find(v => v.id === currentViewId)?.label || '';
+      document.getElementById('logEntryKicker').textContent = groupLabel;
+      document.getElementById('logEntryTitle').textContent = `${episode.no}｜${episode.label}｜${groupLabel}`;
+      document.getElementById('logEntryText').textContent = content;
+
+      [...document.querySelectorAll('.log-episode-btn')].forEach((button) => {
+        const isActive = button.dataset.episodeIndex === String(episodeIndex);
+        button.classList.toggle('active', isActive);
+      });
+    }
+
+    function renderEpisodeList() {
+      const listEl = document.getElementById('logEpisodeList');
+      listEl.innerHTML = '';
+
+      LOG_PREVIEW_DATA.episodes.forEach((episode, episodeIndex) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.dataset.episodeIndex = String(episodeIndex);
+        button.className = `log-episode-btn${episodeIndex === 0 ? ' active' : ''}`;
+        button.innerHTML = `
+          <span class="log-episode-no">${episode.no}</span>
+          <span class="log-episode-label">${episode.label}</span>
+        `;
+
+        button.addEventListener('click', () => {
+          const isSameEpisode = currentEpisodeIndex === episodeIndex;
+          renderEpisodeContent(episodeIndex);
+
+          if (!isSameEpisode) {
+            playViewSwitchAnimation();
+            document.querySelector('.log-content')?.scrollTo({ top: 0, behavior: 'smooth' });
+          }
+        });
+
+        listEl.appendChild(button);
+      });
+    }
+
+    function init() {
+      document.getElementById('logAreaTitle').textContent = LOG_PREVIEW_DATA.area;
+      document.getElementById('logAreaSubtitle').textContent = LOG_PREVIEW_DATA.subtitle;
+      renderEpisodeList();
+      renderEpisodeContent(0);
+    }
+
+    document.getElementById('closeBtn')?.addEventListener('click', () => {
+      if (window.history.length > 1) {
+        window.history.back();
+      } else {
+        window.location.href = '../area-extra-records.html';
+      }
+    });
+
+    init();
+  </script>
+</body>
+</html>

@@ -1,0 +1,1291 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>創作相簿</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+
+    :root {
+      --bg-1: #060403;
+      --bg-2: #140b06;
+      --window: linear-gradient(180deg, rgba(20, 12, 8, 0.95), rgba(10, 7, 5, 0.95));
+      --titlebar: linear-gradient(90deg, rgba(228, 138, 78, 0.08), transparent);
+      --line: rgba(228, 138, 78, 0.18);
+      --line-strong: rgba(255, 190, 145, 0.35);
+      --text: #f6e7d9;
+      --muted: #b39277;
+      --accent: #ffd9bf;
+      --accent-soft: rgba(255, 140, 60, 0.08);
+      --mono: "JetBrains Mono", monospace;
+      --sans: "Segoe UI", "Noto Sans TC", sans-serif;
+      --shadow: 0 24px 70px rgba(0, 0, 0, 0.6);
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      font-family: var(--sans);
+      color: var(--text);
+      background:
+        linear-gradient(rgba(224, 122, 58, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(224, 122, 58, 0.05) 1px, transparent 1px),
+        linear-gradient(180deg, var(--bg-1), #0b0604, var(--bg-2));
+      background-size: 48px 48px, 48px 48px, auto;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    button {
+      font: inherit;
+    }
+
+    .page {
+      min-height: 100vh;
+      padding: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+   .window {
+  width: min(1200px, 95vw);
+  height: min(860px, calc(100vh - 48px));
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--window);
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+}
+
+    .titlebar {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--line);
+      background: var(--titlebar);
+      font-family: var(--mono);
+      font-size: 12px;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+    }
+
+    .window-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .back-btn {
+      border: 1px solid rgba(255,140,60,.25);
+      background: rgba(255,140,60,.08);
+      color: #ffd9bf;
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: .12em;
+      padding: 6px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: .2s;
+    }
+
+    .back-btn:hover {
+      background: rgba(255,140,60,.18);
+      border-color: rgba(255,180,120,.5);
+    }
+
+    .window-title {
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: var(--muted);
+    }
+
+    .path {
+      font-size: 11px;
+      color: #d8b8a0;
+      letter-spacing: 0.08em;
+      white-space: nowrap;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    .dot.red { background: #d65a3a; }
+    .dot.yellow { background: #cfa05a; }
+    .dot.green { background: #7fbf7f; }
+
+    .content {
+  padding: 26px 30px 30px;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  overflow: hidden;
+}
+
+    .intro-panel {
+      padding: 18px 20px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: rgba(255, 140, 60, 0.04);
+    }
+
+    .intro-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: start;
+      margin-bottom: 14px;
+    }
+
+    .eyebrow {
+      color: #e7b28a;
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    h1 {
+      margin: 0 0 10px;
+      font-size: clamp(1.9rem, 3.5vw, 2.8rem);
+      line-height: 1.06;
+      letter-spacing: 0.02em;
+    }
+
+    .intro-text,
+    .system-note,
+    .meta-box p,
+    .icon-label small {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.8;
+    }
+
+    .intro-stats {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .meta-box,
+    .system-note {
+      padding: 14px;
+      border: 1px solid rgba(255,140,60,0.2);
+      border-radius: 8px;
+      background: rgba(255,140,60,0.05);
+    }
+
+    .meta-box strong {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #ffe8d5;
+    }
+
+    .system-note {
+      min-width: 240px;
+      max-width: 300px;
+    }
+
+.grid {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 30px 32px;
+  width: 100%;
+  align-content: start;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 8px;
+}
+
+    .icon {
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      position: relative;
+      padding: 6px 8px;
+      border-radius: 8px;
+      user-select: none;
+      transition: transform 0.2s ease;
+    }
+
+    .icon:hover {
+      transform: translateY(-3px);
+    }
+
+    .icon.selected {
+      transform: scale(1.05);
+    }
+
+    .icon.selected::before {
+      content: "";
+      position: absolute;
+      inset: -5px -8px;
+      background: rgba(255, 140, 60, 0.18);
+      border: 1px solid rgba(255, 170, 100, 0.6);
+      border-radius: 8px;
+      z-index: 0;
+    }
+
+    .icon.selected .icon-box,
+    .icon.selected .icon-label {
+      position: relative;
+      z-index: 1;
+    }
+
+    .icon.selected .icon-box {
+      filter: brightness(1.15);
+      border-color: rgba(255, 200, 150, 0.8);
+      animation: flash 0.35s ease-out 1, pulse 1.2s ease-in-out 0.35s infinite alternate;
+    }
+
+    .icon.selected .icon-label {
+      color: #ffffff;
+    }
+
+    .icon-box {
+      width: 156px;
+      height: 110px;
+      border-radius: 4px;
+      border: 1px solid rgba(255, 140, 60, 0.45);
+      background: linear-gradient(180deg, rgba(255, 150, 60, 0.35), rgba(200, 90, 20, 0.25));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Share Tech Mono', var(--mono);
+      font-size: 20px;
+      letter-spacing: 0.15em;
+      color: #ffd9bf;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 220, 180, 0.25),
+        inset 0 -1px 4px rgba(120, 50, 10, 0.25),
+        0 4px 10px rgba(0, 0, 0, 0.2);
+      backdrop-filter: blur(6px);
+      transition: transform 0.2s ease, filter 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+      position: relative;
+      overflow: visible;
+      z-index: 1;
+    }
+
+    .icon-box::before {
+      content: "";
+      position: absolute;
+      top: -14px;
+      left: 14px;
+      width: 48px;
+      height: 18px;
+      background: linear-gradient(180deg, rgba(255, 160, 70, 0.45), rgba(200, 90, 20, 0.25));
+      border: 1px solid rgba(255, 140, 60, 0.45);
+      border-bottom: none;
+      border-radius: 4px 4px 0 0;
+    }
+
+    .icon-box::after {
+      content: "";
+      position: absolute;
+      inset: 6px;
+      border-radius: 3px;
+      border: 1px solid rgba(255, 200, 150, 0.12);
+      pointer-events: none;
+      z-index: 3;
+    }
+
+    .icon:hover .icon-box {
+      transform: translateY(-4px);
+      filter: brightness(1.08);
+      box-shadow:
+        inset 0 2px 0 rgba(255, 255, 255, 0.4),
+        inset 0 -2px 8px rgba(120, 70, 10, 0.35),
+        0 10px 20px rgba(0, 0, 0, 0.35);
+    }
+
+    .icon-box img {
+      width: calc(100% - 12px);
+      height: calc(100% - 12px);
+      object-fit: cover;
+      display: block;
+      position: relative;
+      z-index: 1;
+      border-radius: 2px;
+      opacity: 0.94;
+      margin-top: 6px;
+      filter: saturate(0.92) contrast(1.02);
+    }
+
+    .fallback-code {
+      position: absolute;
+      inset: 0;
+      display: none;
+      place-items: center;
+      padding: 12px;
+      text-align: center;
+      font-family: 'Share Tech Mono', var(--mono);
+      font-size: 0.85rem;
+      line-height: 1.7;
+      color: #ffd9bf;
+      z-index: 2;
+    }
+
+    .icon-label {
+      position: relative;
+      z-index: 1;
+      font-size: 15px;
+      font-weight: 500;
+      color: #e8cdb8;
+      text-align: center;
+      line-height: 1.45;
+      letter-spacing: 0.01em;
+      word-break: break-word;
+    }
+
+    .icon-label small {
+      display: block;
+      margin-top: 3px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .empty-state {
+      display: none;
+      padding: 28px 20px;
+      border: 1px dashed rgba(255,140,60,0.22);
+      border-radius: 10px;
+      background: rgba(255,140,60,0.04);
+      color: var(--muted);
+      text-align: center;
+      line-height: 1.8;
+    }
+
+    body.modal-open {
+      overflow: hidden;
+    }
+
+    .preview-modal {
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  background: rgba(8, 4, 2, 0.72);
+  backdrop-filter: blur(8px);
+  z-index: 999;
+}
+
+    .preview-modal.active {
+      display: flex;
+    }
+
+.preview-dialog {
+  width: min(1600px, 98vw);
+  height: min(96vh, 1200px);
+  max-height: 96vh;
+  overflow: hidden;
+  border: 1px solid rgba(255, 140, 60, 0.28);
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(24, 13, 8, 0.98), rgba(10, 7, 5, 0.98));
+  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.6);
+  display: flex;
+  flex-direction: column;
+}
+
+    .preview-topbar {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items: center;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(90deg, rgba(228, 138, 78, 0.08), transparent);
+      font-family: var(--mono);
+    }
+
+    .preview-path {
+      min-width: 0;
+      color: #d8b8a0;
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .preview-close {
+      border: 1px solid rgba(255,140,60,.25);
+      background: rgba(255,140,60,.08);
+      color: #ffd9bf;
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: .12em;
+      padding: 6px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: .2s;
+    }
+
+    .preview-close:hover {
+      background: rgba(255,140,60,.18);
+      border-color: rgba(255,180,120,.5);
+    }
+
+    .preview-content {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 220px;
+  gap: 0;
+  min-height: 0;
+  flex: 1;
+}
+
+    .preview-figure {
+      min-height: 320px;
+      background:
+        linear-gradient(rgba(224, 122, 58, 0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(224, 122, 58, 0.04) 1px, transparent 1px),
+        linear-gradient(180deg, rgba(40, 22, 12, 0.85), rgba(14, 8, 5, 0.95));
+      background-size: 32px 32px, 32px 32px, auto;
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 14px;
+      padding: 20px;
+      border-right: 1px solid rgba(255,140,60,0.12);
+      overflow: hidden;
+    }
+
+    .preview-stage {
+  position: relative;
+  min-width: 0;
+  min-height: 78vh;
+  display: grid;
+  place-items: center;
+  overflow: auto;
+}
+
+.preview-figure img {
+  max-width: 100%;
+  max-height: 84vh;
+  object-fit: contain;
+  border: 1px solid rgba(255,140,60,0.18);
+  border-radius: 10px;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.35);
+  background: rgba(255,255,255,0.02);
+}
+
+    .preview-nav {
+      width: 40px;
+      height: 40px;
+      border: 1px solid rgba(255,140,60,.25);
+      background: rgba(255,140,60,.08);
+      color: #ffd9bf;
+      font-family: var(--mono);
+      font-size: 18px;
+      line-height: 1;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: .2s;
+      flex-shrink: 0;
+    }
+
+    .preview-nav:hover {
+      background: rgba(255,140,60,.18);
+      border-color: rgba(255,180,120,.5);
+    }
+
+    .preview-nav:disabled {
+      opacity: 0.35;
+      cursor: default;
+    }
+
+    .preview-counter {
+      position: absolute;
+      right: 10px;
+      bottom: 10px;
+      padding: 5px 8px;
+      border: 1px solid rgba(255,140,60,0.16);
+      border-radius: 999px;
+      background: rgba(20, 10, 5, 0.78);
+      color: #ffd9bf;
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.08em;
+    }
+
+    .preview-fallback {
+      display: none;
+      place-items: center;
+      width: min(420px, 100%);
+      min-height: 260px;
+      padding: 20px;
+      text-align: center;
+      color: #ffd9bf;
+      border: 1px dashed rgba(255,140,60,0.28);
+      border-radius: 12px;
+      background: rgba(255,140,60,0.04);
+      font-family: 'Share Tech Mono', var(--mono);
+      letter-spacing: 0.12em;
+      line-height: 1.8;
+    }
+
+    .preview-info {
+      padding: 18px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      background: rgba(255,140,60,0.03);
+    }
+
+    .preview-info .eyebrow {
+      margin-bottom: 0;
+    }
+
+    .preview-title {
+      margin: 0;
+      font-size: 1.3rem;
+      line-height: 1.3;
+      color: #ffe8d5;
+    }
+
+    .preview-meta {
+      display: grid;
+      gap: 10px;
+    }
+
+    .preview-meta-box {
+      padding: 12px;
+      border: 1px solid rgba(255,140,60,0.18);
+      border-radius: 8px;
+      background: rgba(255,140,60,0.04);
+    }
+
+    .preview-meta-box strong {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 0.8rem;
+      font-family: var(--mono);
+      letter-spacing: 0.12em;
+      color: #ffd9bf;
+    }
+
+    .preview-meta-box span {
+      display: block;
+      color: var(--muted);
+      line-height: 1.7;
+      word-break: break-word;
+      font-size: 0.92rem;
+    }
+
+    .window.locked {
+      animation: lockedFlash 0.4s ease;
+    }
+
+    @keyframes flash {
+      0% {
+        box-shadow:
+          inset 0 1px 0 rgba(255, 220, 180, 0.25),
+          inset 0 -1px 4px rgba(120, 50, 10, 0.25),
+          0 0 0 rgba(255,140,60,0);
+        filter: brightness(1);
+      }
+      40% {
+        box-shadow:
+          inset 0 2px 0 rgba(255,255,255,0.55),
+          inset 0 -2px 10px rgba(120,50,10,0.45),
+          0 0 28px rgba(255,140,60,0.85);
+        filter: brightness(1.35);
+      }
+      100% {
+        box-shadow:
+          inset 0 1px 0 rgba(255, 220, 180, 0.25),
+          inset 0 -1px 4px rgba(120, 50, 10, 0.25),
+          0 0 8px rgba(255,140,60,0.25);
+        filter: brightness(1.15);
+      }
+    }
+
+    @keyframes pulse {
+      from {
+        box-shadow:
+          inset 0 1px 0 rgba(255, 220, 180, 0.25),
+          inset 0 -1px 4px rgba(120, 50, 10, 0.25),
+          0 0 8px rgba(255, 140, 60, 0.25);
+      }
+      to {
+        box-shadow:
+          inset 0 1px 0 rgba(255, 220, 180, 0.35),
+          inset 0 -1px 6px rgba(120, 50, 10, 0.35),
+          0 0 18px rgba(255, 140, 60, 0.55);
+      }
+    }
+
+    @keyframes lockedFlash {
+      0% {
+        filter: brightness(1);
+        transform: translateX(0);
+      }
+      20% {
+        filter: brightness(1.6);
+        transform: translateX(-3px);
+      }
+      40% {
+        filter: brightness(0.7);
+        transform: translateX(3px);
+      }
+      60% {
+        filter: brightness(1.4);
+        transform: translateX(-2px);
+      }
+      100% {
+        filter: brightness(1);
+        transform: translateX(0);
+      }
+    }
+
+    code {
+      padding: 0 0.3em;
+      border-radius: 4px;
+      background: rgba(255,140,60,0.08);
+      color: #ffe8d5;
+      font-family: Consolas, monospace;
+      font-size: 0.92em;
+    }
+
+    @media (max-width: 900px) {
+      .titlebar { grid-template-columns: 1fr; }
+      .window-title, .path { text-align: left; }
+      .intro-top { flex-direction: column; }
+      .intro-stats { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 700px) {
+      .grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 20px 18px; }
+      .path { display: none; }
+      .content { padding: 20px; }
+      .preview-content { grid-template-columns: 1fr; }
+      .preview-figure {
+        min-height: 240px;
+        grid-template-columns: 36px minmax(0, 1fr) 36px;
+        border-right: none;
+        border-bottom: 1px solid rgba(255,140,60,0.12);
+        padding: 14px;
+        gap: 8px;
+      }
+      .preview-stage { min-height: 62vh; }
+      .preview-nav {
+        width: 36px;
+        height: 36px;
+      }
+      .preview-dialog { max-height: 96vh; height: 96vh; }
+    }
+.grid::-webkit-scrollbar {
+  width: 10px;
+}
+
+.grid::-webkit-scrollbar-track {
+  background: rgba(255, 140, 60, 0.06);
+  border-radius: 999px;
+}
+
+.grid::-webkit-scrollbar-thumb {
+  background: rgba(255, 180, 120, 0.35);
+  border-radius: 999px;
+}
+
+.grid::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 190, 145, 0.5);
+}
+  </style>
+</head>
+<body>
+  <main class="page">
+    <div class="window">
+      <div class="titlebar">
+        <div class="window-controls">
+          <button class="back-btn" id="backBtn">← BACK</button>
+          <div class="dot red"></div>
+          <div class="dot yellow"></div>
+          <div class="dot green"></div>
+        </div>
+        <div class="window-title">ARCHIVE-01 / CREATION GALLERY</div>
+        <div class="path">C:/archive/images_gallery</div>
+      </div>
+
+      <div class="content">
+        
+
+        <div class="grid" id="galleryGrid"></div>
+        <div class="empty-state" id="emptyState">暫無內容</div>
+      </div>
+    </div>
+  </main>
+
+  <div class="preview-modal" id="previewModal" aria-hidden="true">
+    <div class="preview-dialog" role="dialog" aria-modal="true" aria-labelledby="previewTitle">
+      <div class="preview-topbar">
+        <div class="preview-path" id="previewPath">C:/archive/images_gallery</div>
+        <button class="preview-close" id="previewClose">CLOSE</button>
+      </div>
+
+      <div class="preview-content">
+        <div class="preview-figure">
+          <button class="preview-nav" id="previewPrev" type="button" aria-label="上一張">‹</button>
+          <div class="preview-stage">
+            <img id="previewImage" src="" alt="預覽圖片">
+            <div class="preview-fallback" id="previewFallback">CONTENT<br>NOT FOUND</div>
+            <div class="preview-counter" id="previewCounter">0 / 0</div>
+          </div>
+          <button class="preview-nav" id="previewNext" type="button" aria-label="下一張">›</button>
+        </div>
+
+        <div class="preview-info">
+          <h2 class="preview-title" id="previewTitle">未命名圖片</h2>
+
+          <div class="preview-meta">
+            <div class="preview-meta-box">
+              <strong>名稱</strong>
+              <span id="previewFileName">-</span>
+            </div>
+            <div class="preview-meta-box">
+              <strong>時間點</strong>
+              <span id="previewSource">-</span>
+            </div>
+            <div class="preview-meta-box">
+              <strong>備註內容</strong>
+              <span id="previewStatus">READY</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+const galleryItems = [
+  {
+    title: "キャバ嬢風格彩圖",
+    time: "無",
+    note: "我想畫戴莉身上那套\n但是感覺只畫她又很奇怪\n所以我就把大三角都畫一畫了",
+    images: [
+      "images/キャバ嬢完成圖.png"
+    ]
+  },
+  {
+    title: "說到眼鏡變裝……",
+    time: "無",
+    note: "我想看她們戴眼鏡！",
+    images: [
+      "images/眼鏡P1.png",
+      "images/眼鏡P2.png"
+    ]
+  },
+  {
+    title: "洛潔莉雅　01.22 生日快樂!",
+    time: "01.22 生日",
+    note: "可可愛愛24歲合法蘿莉生日",
+    images: [
+      "images/洛潔莉雅生日.png"
+    ]
+  },
+  {
+    title: "瑪莉亞 12.28 生日快樂!",
+    time: "12.28 生日",
+    note: "瑪莉亞吃生日但戴莉貼心擦嘴 mua mua",
+    images: [
+      "images/瑪利亞生日.png"
+    ]
+  },
+  {
+    title: "光腿長條",
+    time: "無",
+    note: "我想畫光腳+主圖色圖，對。",
+    images: [
+      "images/插圖14.png",
+      "images/很帥的直條1.png",
+      "images/很帥的直條3.png",
+      "images/很帥的直條2.png",
+      "images/很帥的直條4.png",
+      "images/很帥的直條5.png"
+    ]
+  },
+  {
+    title: "魅魔姜燕",
+    time: "演員PARO",
+    note: "能夠一次讓兩個女的喜歡上的渣女",
+    images: [
+      "images/演藝PA_即將工作的姜燕.png",
+      "images/演藝PA_即將工作的姜燕-2.png",
+      "images/演藝PA_即將工作的姜燕-1.png"
+    ]
+  },
+  {
+    title: "姜燕媽&戴莉媽",
+    time: "無",
+    note: "突然想畫\n坎特蕾拉是戴莉媽媽",
+    images: [
+      "images/插圖24.png"
+    ]
+  },
+  {
+    title: "說到初夜的話……(幻想)",
+    time: "演員PARO",
+    note: "幻想中的初夜",
+    images: [
+      "images/演員PA_初夜(幻想)_戴莉(tc).png",
+      "images/演員PA_初夜(NO)_瑪莉亞(TC).png"
+    ]
+  },
+  {
+    title: "晨光",
+    time: "無",
+    note: "我想畫而已\n想看剛起床的戴莉",
+    images: [
+      "images/ageerh.png"
+    ]
+  },
+  {
+    title: "一張圖了解狡兔大三角",
+    time: "無",
+    note: "讓第1次瞭解狡兔的人能夠迅速的知道什麼是狡兔大三角的圖\n(有描改)",
+    images: [
+      "images/一張圖了解大三角.png"
+    ]
+  },
+  {
+    title: "2025中秋節賀圖",
+    time: "無/2025中秋節",
+    note: "中秋節當天一邊烤肉一邊畫的(??)\n\n當時還沒有克萊兒",
+    images: [
+      "images/中秋節2025.png"
+    ]
+  },
+  {
+    title: "戴莉胖了",
+    time: "無",
+    note: "想畫戴莉生氣爆打姜燕的漫畫",
+    images: [
+      "images/戴莉胖了(TC)P1.png",
+      "images/戴莉胖了(TC)P2.png",
+      "images/戴莉胖了(TC)附錄.png"
+    ]
+  },
+  {
+    title: "殉教者山丘主線圖",
+    time: "主線-殉教者山丘",
+    note: "針對殉教者刪球的主線畫的劇情圖片還有完結圖片",
+    images: [
+      "images/火花主線結尾插圖(TC).png",
+      "images/火花主線結尾插圖(無字).png",
+      "images/殉教者山丘完結紀念圖.png"
+    ]
+  },
+  {
+    title: "只許於我的……",
+    time: "無",
+    note: "有參考構圖但我一直找不到，畫了姜燕非常沉重的感情❤️",
+    images: [
+      "images/插圖7-2.png",
+      "images/插圖9.png",
+      "images/螢幕擷取畫面 2025-09-28 004259.png"
+    ]
+  },
+  {
+    title: "所羅門武裝",
+    time: "無",
+    note: "目前只畫了戴莉的",
+    images: [
+      "images/戴莉-所羅門武裝.png"
+    ]
+  },
+  {
+    title: "奇蹟少女",
+    time: "無",
+    note: "遊戲原生時裝，畫了狡兔版～～",
+    images: [
+      "images/奇蹟少女2.png",
+      "images/【姜燕】奇蹟少女2.png",
+      "images/【瑪莉亞】奇蹟少女2.png",
+      "images/【戴莉】奇蹟少女2.png"
+    ]
+  },
+  {
+    title: "水兵冒險日記",
+    time: "無",
+    note: "原創時裝，當時好想畫水手服配死庫水",
+    images: [
+      "images/水兵冒險日記 封面.png",
+      "images/水兵冒險日記2-03.png",
+      "images/水兵冒險日記2-02.png",
+      "images/水兵冒險日記2-01.png",
+      "images/水兵冒險日記2-04.png",
+      "images/水兵冒險日記2-05.png"
+    ]
+  },
+  {
+    title: "四格漫畫１",
+    time: "無",
+    note: "這張設定是採用R18版的",
+    images: [
+      "images/四格1(TC).png"
+    ]
+  },
+  {
+    title: "四格漫畫2",
+    time: "無",
+    note: "不要把隊友當狗!!!",
+    images: [
+      "images/四格2(tc).png"
+    ]
+  },
+  {
+    title: "重女大三角",
+    time: "無",
+    note: "是姜燕先勾搭的，要負責也理所當然吧？好想看戴瑪沉重的感情……❤️",
+    images: [
+      "images/好好看重女戴瑪(TC).png"
+    ]
+  },
+  {
+    title: "姜燕回憶任務【深海禮葬】",
+    time: "回憶任務",
+    note: "姜燕回憶任務的時裝，也是縱慾王之女的樣貌",
+    images: [
+      "images/姜燕回憶任務【深海禮葬】tw.png"
+    ]
+  },
+  {
+    title: "戴莉回憶任務【火花的人偶】",
+    time: "回憶任務",
+    note: "戴莉回憶任務的時裝，也是戴莉被洗禮的樣貌，還有小寵物【迷你火花的人偶】",
+    images: [
+      "images/戴莉【火花的人偶】TW.png",
+      "images/戴莉寵物【迷你火花的人偶】(活動圖).png"
+    ]
+  },
+  {
+    title: "【姜瑪】無題",
+    time: "無",
+    note: "想看姜瑪糧食",
+    images: [
+      "images/wh6j.png"
+    ]
+  },
+  {
+    title: "【姜戴】無題",
+    time: "無",
+    note: "想看姜戴糧食",
+    images: [
+      "images/rjji.png"
+    ]
+  },
+  {
+    title: "【戴瑪】無題",
+    time: "神獸學園PARO",
+    note: "神獸學園PARO就是一個每個人都受到八歧大蛇的詛咒營醒，會有亞獸化、發情的特徵——其實就是我想拿來畫發情劇情想的PARO啦",
+    images: [
+      "images/rtyihujo.png"
+    ]
+  },
+  {
+    title: "插圖-直到某日戴上項圈",
+    time: "獵者之夜-插曲",
+    note: "獵者之夜短篇番外【直到某日戴上項圈】的概念圖(因為內容跟這個差很多)",
+    images: [
+      "images/hwuih(TC).png"
+    ]
+  },
+  {
+    title: "????",
+    time: "無",
+    note: "突然想畫迷你姜燕寶午覺起床發現沒有人，跑去廁所找戴莉姊姊哭的圖(對非常的沒有道理)",
+    images: [
+      "images/k8y.png"
+    ]
+  },
+  {
+    title: "泳裝塗鴉/水槍祭典",
+    time: "無",
+    note: "之前畫的塗鴉",
+    images: [
+      "images/水FES姜燕.png",
+      "images/IMG_0164.png"
+    ]
+  },
+  {
+    title: "搗蛋小惡鬼",
+    time: "無",
+    note: "之前畫的，偏塗鴉",
+    images: [
+      "images/FGY6KJS.png"
+    ]
+  }
+];
+    const galleryGrid = document.getElementById("galleryGrid");
+    const emptyState = document.getElementById("emptyState");
+    const backBtn = document.getElementById("backBtn");
+    const previewModal = document.getElementById("previewModal");
+    const previewClose = document.getElementById("previewClose");
+    const previewImage = document.getElementById("previewImage");
+    const previewFallback = document.getElementById("previewFallback");
+    const previewTitle = document.getElementById("previewTitle");
+    const previewPath = document.getElementById("previewPath");
+    const previewFileName = document.getElementById("previewFileName");
+    const previewSource = document.getElementById("previewSource");
+    const previewStatus = document.getElementById("previewStatus");
+    const previewPrev = document.getElementById("previewPrev");
+    const previewNext = document.getElementById("previewNext");
+    const previewCounter = document.getElementById("previewCounter");
+
+    let currentPreviewItem = null;
+    let currentPreviewIndex = 0;
+
+    backBtn.addEventListener("click", () => {
+      if (window.history.length > 1) {
+        window.history.back();
+      } else {
+        window.location.href = "dashboard.html";
+      }
+    });
+
+    function playLockedAnimation() {
+      const panel = document.querySelector(".window");
+      panel?.classList.add("locked");
+
+      setTimeout(() => {
+        panel?.classList.remove("locked");
+      }, 400);
+    }
+
+    function clearSelected() {
+      document.querySelectorAll(".icon.selected").forEach((item) => {
+        item.classList.remove("selected");
+      });
+    }
+
+    function normalizeImages(item) {
+      return Array.isArray(item?.images) ? item.images.filter(Boolean) : [];
+    }
+
+    function getResolvedSrc(src) {
+      return src ? encodeURI(src) : "";
+    }
+
+    function getThumbSrc(item) {
+      return getResolvedSrc(normalizeImages(item)[0] || "");
+    }
+
+    function getDisplayPath(src) {
+      return src ? src.split("/").pop() || src : "-";
+    }
+
+    function updatePreviewNavigation(images) {
+      const canSwitch = images.length > 1;
+      previewPrev.disabled = !canSwitch;
+      previewNext.disabled = !canSwitch;
+      previewCounter.textContent = images.length ? `${currentPreviewIndex + 1} / ${images.length}` : "0 / 0";
+    }
+
+    function showPreviewImage(index) {
+      const images = normalizeImages(currentPreviewItem);
+
+      if (!images.length) {
+        previewPath.textContent = "C:/archive/images_gallery";
+        previewImage.removeAttribute("src");
+        previewImage.style.display = "none";
+        previewFallback.style.display = "grid";
+        updatePreviewNavigation(images);
+        return;
+      }
+
+      currentPreviewIndex = (index + images.length) % images.length;
+      const rawSrc = images[currentPreviewIndex];
+      const src = getResolvedSrc(rawSrc);
+      previewPath.textContent = `C:/archive/images_gallery/${getDisplayPath(rawSrc)}`;
+      previewFallback.style.display = "none";
+      previewImage.style.display = "block";
+      previewImage.src = src;
+      previewImage.alt = `${currentPreviewItem?.title || "預覽圖片"} ${currentPreviewIndex + 1}`;
+      updatePreviewNavigation(images);
+    }
+
+    function openPreviewModal(item) {
+      currentPreviewItem = item;
+      currentPreviewIndex = 0;
+      previewTitle.textContent = item.title || "未命名圖片";
+      previewFileName.textContent = item.title || "-";
+      previewSource.textContent = item.time || "-";
+      previewStatus.textContent = item.note || "-";
+      previewModal.classList.add("active");
+      previewModal.setAttribute("aria-hidden", "false");
+      document.body.classList.add("modal-open");
+      showPreviewImage(0);
+    }
+
+    function closePreviewModal() {
+      previewModal.classList.remove("active");
+      previewModal.setAttribute("aria-hidden", "true");
+      document.body.classList.remove("modal-open");
+    }
+
+    function handleIconClick(itemElement, event, itemData) {
+      const isSelected = itemElement.classList.contains("selected");
+      const isLocked = itemElement.hasAttribute("data-locked");
+
+      event.preventDefault();
+
+      if (!isSelected) {
+        clearSelected();
+        itemElement.classList.add("selected");
+
+        if (isLocked) {
+          playLockedAnimation();
+        }
+        return;
+      }
+
+      if (isLocked) {
+        playLockedAnimation();
+        return;
+      }
+
+      openPreviewModal(itemData);
+    }
+
+    function createIcon(itemData, index) {
+      const item = document.createElement("a");
+      item.className = "icon";
+      item.href = "#";
+
+      const thumbSrc = getThumbSrc(itemData);
+      const title = itemData.title || `創作 ${String(index + 1).padStart(2, "0")}`;
+      const subLabel = itemData.time || "創作資料";
+
+      item.innerHTML = `
+        <div class="icon-box">
+          <img src="${thumbSrc}" alt="創作圖片 ${index + 1}" loading="lazy">
+          <div class="fallback-code">FOLDER<br>EMPTY</div>
+        </div>
+        <div class="icon-label">
+          ${title}
+          <small>${subLabel}</small>
+        </div>
+      `;
+
+      const img = item.querySelector("img");
+      const fallback = item.querySelector(".fallback-code");
+
+      if (!thumbSrc) {
+        img.style.display = "none";
+        fallback.style.display = "grid";
+      } else {
+        img.addEventListener("error", () => {
+          img.style.display = "none";
+          fallback.style.display = "grid";
+        });
+      }
+
+      item.addEventListener("click", (event) => {
+        handleIconClick(item, event, itemData);
+      });
+
+      return item;
+    }
+
+    function renderGallery() {
+      galleryGrid.innerHTML = "";
+
+      if (!galleryItems.length) {
+        emptyState.style.display = "block";
+        return;
+      }
+
+      emptyState.style.display = "none";
+      galleryItems.forEach((item, index) => {
+        galleryGrid.appendChild(createIcon(item, index));
+      });
+    }
+
+    previewImage.addEventListener("load", () => {
+      previewImage.style.display = "block";
+      previewFallback.style.display = "none";
+    });
+
+    previewImage.addEventListener("error", () => {
+      previewImage.style.display = "none";
+      previewFallback.style.display = "grid";
+    });
+
+    previewPrev.addEventListener("click", () => {
+      if (currentPreviewItem) {
+        showPreviewImage(currentPreviewIndex - 1);
+      }
+    });
+
+    previewNext.addEventListener("click", () => {
+      if (currentPreviewItem) {
+        showPreviewImage(currentPreviewIndex + 1);
+      }
+    });
+
+    previewClose.addEventListener("click", closePreviewModal);
+
+    previewModal.addEventListener("click", (event) => {
+      if (event.target === previewModal) {
+        closePreviewModal();
+      }
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (!previewModal.classList.contains("active")) {
+        return;
+      }
+
+      if (event.key === "Escape") {
+        closePreviewModal();
+      }
+
+      if (event.key === "ArrowLeft") {
+        showPreviewImage(currentPreviewIndex - 1);
+      }
+
+      if (event.key === "ArrowRight") {
+        showPreviewImage(currentPreviewIndex + 1);
+      }
+    });
+
+    document.addEventListener("click", (event) => {
+      if (!event.target.closest(".icon") && !event.target.closest(".preview-dialog")) {
+        clearSelected();
+      }
+    });
+
+    renderGallery();
+  </script>
+</body>
+</html>

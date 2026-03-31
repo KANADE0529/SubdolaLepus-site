@@ -1,0 +1,112 @@
+.card {
+      position: relative;
+      flex: 0 0 200px;
+      width: 200px;
+      height: 720px;
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      background: rgba(255,255,255,0.02);
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform .28s ease, box-shadow .28s ease;
+      opacity: 0;
+      animation: cardEnter .8s cubic-bezier(.2,.8,.2,1) forwards;
+    }
+
+    .card:nth-child(1) { animation-delay: .34s; }
+    .card:nth-child(2) { animation-delay: .42s; }
+    .card:nth-child(3) { animation-delay: .50s; }
+    .card:nth-child(4) { animation-delay: .58s; }
+    .card:nth-child(5) { animation-delay: .66s; }
+    .card:nth-child(6) { animation-delay: .74s; }
+
+    .card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 0 0 1px rgba(224,122,58,0.10), 0 16px 36px rgba(0,0,0,.65);
+      z-index: 3;
+    }
+
+    .card-img {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .card-layer {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--muted);
+      transition: opacity .32s ease, transform .32s ease, filter .32s ease;
+    }
+
+    .card-layer.base {
+      background:
+        linear-gradient(180deg, rgba(224,122,58,0.16), rgba(255,255,255,0.02)),
+        linear-gradient(120deg, rgba(224,122,58,0.18), rgba(255,255,255,0.02));
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    .card-layer.hover {
+      background:
+        linear-gradient(180deg, rgba(255,179,127,0.20), rgba(255,255,255,0.03)),
+        linear-gradient(120deg, rgba(255,210,170,0.18), rgba(224,122,58,0.06));
+      opacity: 0;
+      transform: scale(1.04);
+      filter: brightness(1.06);
+      color: #ffe2ca;
+    }
+
+    .card:hover .card-layer.base {
+      opacity: 0;
+      transform: scale(1.03);
+      filter: blur(2px);
+    }
+
+    .card:hover .card-layer.hover {
+      opacity: 1;
+      transform: scale(1);
+      filter: blur(0);
+    }
+
+    .card-img::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, transparent 45%, rgba(8,4,2,0.72) 100%);
+      pointer-events: none;
+    }
+
+    .card-body {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 16px 12px;
+  z-index: 1;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: .24s;
+  pointer-events: none;
+}
+
+.card:hover .card-body {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.name {
+  font-size: 21px;
+  line-height: 1.25;
+  color: var(--accent-soft);
+  text-shadow: 0 4px 12px rgba(0,0,0,.45);
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  margin-left: auto;
+}下午 03:16 2026/3/26

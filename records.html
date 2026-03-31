@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>一般檔案紀錄</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+
+    :root {
+      --bg-1: #060403;
+      --bg-2: #140b06;
+      --line: rgba(228, 138, 78, 0.18);
+      --line-strong: rgba(255, 190, 145, 0.35);
+      --text: #f6e7d9;
+      --muted: #b39277;
+      --mono: "JetBrains Mono", monospace;
+      --sans: "Segoe UI", "Noto Sans TC", sans-serif;
+      --shadow: 0 24px 70px rgba(0, 0, 0, 0.6);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--sans);
+      color: var(--text);
+      background:
+        linear-gradient(rgba(224, 122, 58, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(224, 122, 58, 0.05) 1px, transparent 1px),
+        linear-gradient(180deg, var(--bg-1), #0b0604, var(--bg-2));
+      background-size: 48px 48px, 48px 48px, auto;
+    }
+
+    .window {
+      width: min(1200px, 95vw);
+      height: min(700px, 85vh);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      overflow: hidden;
+      background: linear-gradient(180deg, rgba(20, 12, 8, 0.95), rgba(10, 7, 5, 0.95));
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .back-btn{
+      border:1px solid rgba(255,140,60,.25);
+      background:rgba(255,140,60,.08);
+      color:#ffd9bf;
+      font-family:var(--mono);
+      font-size:11px;
+      letter-spacing:.12em;
+      padding:6px 10px;
+      border-radius:8px;
+      cursor:pointer;
+      transition:.2s;
+    }
+
+    .back-btn:hover{
+      background:rgba(255,140,60,.18);
+      border-color:rgba(255,180,120,.5);
+    }
+
+    .titlebar {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(90deg, rgba(228, 138, 78, 0.08), transparent);
+      font-family: var(--mono);
+      font-size: 12px;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+    }
+
+    .window-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .window-title {
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .path {
+      font-size: 11px;
+      color: #d8b8a0;
+      letter-spacing: 0.08em;
+      white-space: nowrap;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    .dot.red { background: #d65a3a; }
+    .dot.yellow { background: #cfa05a; }
+    .dot.green { background: #7fbf7f; }
+
+    .content {
+      padding: 30px;
+      flex: 1;
+      display: flex;
+      align-items: flex-start;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 40px 44px;
+      width: 100%;
+      align-content: flex-start;
+    }
+
+    .icon {
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      position: relative;
+      padding: 8px 10px;
+      border-radius: 8px;
+      user-select: none;
+      transition: transform 0.2s ease;
+    }
+
+    .icon.selected {
+      transform: scale(1.05);
+    }
+
+    .icon.selected::before {
+      content: "";
+      position: absolute;
+      inset: -6px -10px;
+      background: rgba(255, 140, 60, 0.18);
+      border: 1px solid rgba(255, 170, 100, 0.6);
+      border-radius: 8px;
+      z-index: 0;
+    }
+
+    .icon-box {
+      width: 143px;
+      height: 101px;
+      border-radius: 4px;
+      border: 1px solid rgba(255, 140, 60, 0.45);
+      background: linear-gradient(180deg, rgba(255, 150, 60, 0.35), rgba(200, 90, 20, 0.25));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Share Tech Mono', var(--mono);
+      font-size: 20px;
+      letter-spacing: 0.15em;
+      color: #ffd9bf;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 220, 180, 0.25),
+        inset 0 -1px 4px rgba(120, 50, 10, 0.25),
+        0 4px 10px rgba(0, 0, 0, 0.2);
+      backdrop-filter: blur(6px);
+      transition: transform 0.2s ease, filter 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+      position: relative;
+      overflow: visible;
+      z-index: 1;
+    }
+
+    .icon-box::before {
+      content: "";
+      position: absolute;
+      top: -10px;
+      left: 10px;
+      width: 36px;
+      height: 14px;
+      background: linear-gradient(180deg, rgba(255, 160, 70, 0.45), rgba(200, 90, 20, 0.25));
+      border: 1px solid rgba(255, 140, 60, 0.45);
+      border-bottom: none;
+      border-radius: 4px 4px 0 0;
+    }
+
+    .icon-box::after {
+      content: "";
+      position: absolute;
+      inset: 6px;
+      border-radius: 3px;
+      border: 1px solid rgba(255, 200, 150, 0.12);
+      pointer-events: none;
+    }
+
+    .icon-code {
+      position: relative;
+      z-index: 1;
+      display: inline-block;
+      line-height: 1;
+    }
+
+    .icon-label {
+      position: relative;
+      z-index: 1;
+      font-size: 16px;
+      color: #e8cdb8;
+      text-align: center;
+      line-height: 1.5;
+    }
+
+    .icon.selected .icon-label {
+      color: #ffffff;
+    }
+
+    .icon:hover .icon-box {
+      transform: translateY(-4px);
+      filter: brightness(1.08);
+      box-shadow:
+        inset 0 2px 0 rgba(255, 255, 255, 0.4),
+        inset 0 -2px 8px rgba(120, 70, 10, 0.35),
+        0 10px 20px rgba(0, 0, 0, 0.35);
+    }
+
+    .icon.selected .icon-box {
+      filter: brightness(1.15);
+      border-color: rgba(255, 200, 150, 0.8);
+      animation: flash 0.35s ease-out 1, pulse 1.2s ease-in-out 0.35s infinite alternate;
+    }
+
+    @keyframes flash {
+      0% {
+        box-shadow:
+          inset 0 1px 0 rgba(255, 220, 180, 0.25),
+          inset 0 -1px 4px rgba(120, 50, 10, 0.25),
+          0 0 0 rgba(255,140,60,0);
+        filter: brightness(1);
+      }
+      40% {
+        box-shadow:
+          inset 0 2px 0 rgba(255,255,255,0.55),
+          inset 0 -2px 10px rgba(120,50,10,0.45),
+          0 0 28px rgba(255,140,60,0.85);
+        filter: brightness(1.35);
+      }
+      100% {
+        box-shadow:
+          inset 0 1px 0 rgba(255, 220, 180, 0.25),
+          inset 0 -1px 4px rgba(120, 50, 10, 0.25),
+          0 0 8px rgba(255,140,60,0.25);
+        filter: brightness(1.15);
+      }
+    }
+
+    @keyframes pulse {
+      from {
+        box-shadow:
+          inset 0 1px 0 rgba(255, 220, 180, 0.25),
+          inset 0 -1px 4px rgba(120, 50, 10, 0.25),
+          0 0 8px rgba(255, 140, 60, 0.25);
+      }
+      to {
+        box-shadow:
+          inset 0 1px 0 rgba(255, 220, 180, 0.35),
+          inset 0 -1px 6px rgba(120, 50, 10, 0.35),
+          0 0 18px rgba(255, 140, 60, 0.55);
+      }
+    }
+
+    .icon.anomaly .icon-box {
+      border-color: rgba(255, 80, 60, 0.6);
+      background: linear-gradient(180deg, rgba(255, 80, 60, 0.25), rgba(120, 20, 20, 0.25));
+      text-shadow: 0 0 6px rgba(255,80,60,0.6);
+    }
+
+    .icon.anomaly:hover .icon-label {
+      color: transparent;
+    }
+
+    .icon.anomaly:hover .icon-label::after {
+      content: "UNKNOWN???";
+      position: absolute;
+      left: 50%;
+      top: 0;
+      transform: translateX(-50%);
+      color: #ffb3a8;
+      white-space: nowrap;
+    }
+
+    .icon.anomaly.selected::before {
+      background: rgba(255, 60, 40, 0.18);
+      border: 1px solid rgba(255, 90, 70, 0.7);
+    }
+
+    .icon.anomaly.selected .icon-box {
+      animation: anomalyFlash 1.8s infinite, anomalyFlicker 0.9s steps(2, end) infinite;
+    }
+
+    .icon.anomaly.selected .icon-code::before,
+    .icon.anomaly.selected .icon-code::after {
+      content: attr(data-code);
+      position: absolute;
+      inset: 0;
+      opacity: 0.65;
+      pointer-events: none;
+    }
+
+    .icon.anomaly.selected .icon-code::before {
+      color: #ff3c2f;
+      animation: glitchTop 0.4s infinite;
+      transform: translate(-2px, -1px);
+    }
+
+    .icon.anomaly.selected .icon-code::after {
+      color: #ff9a6a;
+      animation: glitchBottom 0.4s infinite;
+      transform: translate(2px, 1px);
+    }
+
+    .icon.anomaly.selected .icon-label::before,
+    .icon.anomaly.selected .icon-label::after {
+      content: attr(data-text);
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      opacity: 0.75;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+
+    .icon.anomaly.selected .icon-label::before {
+      color: #ff3c2f;
+      animation: glitchTop 0.4s infinite;
+      transform: translate(-2px, -1px);
+    }
+
+    .icon.anomaly.selected .icon-label::after {
+      color: #ff9a6a;
+      animation: glitchBottom 0.4s infinite;
+      transform: translate(2px, 1px);
+    }
+
+    @keyframes anomalyFlash {
+      0%, 84%, 100% { filter: brightness(1.12); }
+      88% { filter: brightness(1.55); }
+      91% { filter: brightness(0.82); }
+      94% { filter: brightness(1.38); }
+    }
+
+    @keyframes anomalyFlicker {
+      0%, 100% { transform: translate(0, 0); }
+      25% { transform: translate(-1px, 1px); }
+      50% { transform: translate(1px, -1px); }
+      75% { transform: translate(-1px, 0); }
+    }
+
+    @keyframes glitchTop {
+      0% { clip-path: inset(0 0 75% 0); }
+      50% { clip-path: inset(0 0 55% 0); }
+      100% { clip-path: inset(0 0 75% 0); }
+    }
+
+    @keyframes glitchBottom {
+      0% { clip-path: inset(75% 0 0 0); }
+      50% { clip-path: inset(55% 0 0 0); }
+      100% { clip-path: inset(75% 0 0 0); }
+    }
+
+     .modal-overlay {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(5, 3, 2, 0.72);
+      backdrop-filter: blur(6px);
+      z-index: 50;
+      padding: 20px;
+    }
+
+    .modal-overlay.show {
+      display: flex;
+    }
+
+    .modal {
+      width: min(460px, 100%);
+      border: 1px solid rgba(255, 120, 90, 0.28);
+      border-radius: 18px;
+      overflow: hidden;
+      background: linear-gradient(180deg, rgba(30, 12, 10, 0.97), rgba(12, 7, 6, 0.97));
+      box-shadow: 0 0 0 1px rgba(255, 200, 180, 0.04) inset, 0 22px 60px rgba(0, 0, 0, 0.5);
+    }
+
+    .modal-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 18px;
+      border-bottom: 1px solid rgba(255, 120, 90, 0.18);
+      font-family: var(--mono);
+      font-size: 12px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #d8a692;
+      background: linear-gradient(90deg, rgba(255, 90, 70, 0.10), transparent);
+    }
+
+    .modal-title {
+      margin: 0 0 12px;
+      font-size: 28px;
+      line-height: 1.1;
+      color: #fff0e7;
+    }
+
+    .modal-body {
+      padding: 22px 20px 20px;
+    }
+
+    .modal-text {
+      margin: 0;
+      color: #efc5b8;
+      line-height: 1.9;
+      font-size: 15px;
+    }
+
+    .modal-actions {
+      margin-top: 18px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .modal-btn {
+      appearance: none;
+      border: 1px solid rgba(255, 140, 60, 0.24);
+      background: linear-gradient(180deg, rgba(255, 130, 70, 0.18), rgba(255, 130, 70, 0.08));
+      color: #ffe5d4;
+      border-radius: 12px;
+      padding: 10px 14px;
+      font-family: var(--mono);
+      font-size: 12px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      cursor: pointer;
+    }
+
+    .modal-btn.secondary {
+      background: rgba(255, 255, 255, 0.03);
+      border-color: rgba(255, 160, 120, 0.12);
+      color: #d7b2a0;
+    }
+
+    @media (max-width: 700px) {
+      .grid { grid-template-columns: 1fr; }
+      .titlebar { grid-template-columns: auto 1fr; }
+      .path { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="window">
+    <div class="titlebar">
+      <div class="window-controls">
+        <button class="back-btn" id="backBtn">← BACK</button>
+        <div class="dot red"></div>
+        <div class="dot yellow"></div>
+        <div class="dot green"></div>
+      </div>
+      <div class="window-title">ARCHIVE-01 / RECORDS</div>
+      <div class="path">C:/archive/general_records</div>
+    </div>
+
+    <div class="content">
+      <div class="grid" id="iconGrid">
+        <a class="icon" href="default-file-records.html" data-file>
+          <div class="icon-box"><span class="icon-code" data-code="DF">DF</span></div>
+          <div class="icon-label">普通檔案紀錄</div>
+        </a>
+
+        <a class="icon" href="area-extra-records.html" data-file>
+          <div class="icon-box"><span class="icon-code" data-code="EX">EX</span></div>
+          <div class="icon-label">區域額外紀錄</div>
+        </a>
+
+        <a class="icon anomaly" href="corridor-of-nightthought.html" data-file>
+          <div class="icon-box"><span class="icon-code" data-code="UN">UN</span></div>
+          <div class="icon-label" data-text="夜想的迴廊">夜想的迴廊</div>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="warningModal">
+    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="warningTitle">
+      <div class="modal-head">
+        <span>Warning / Unknown File</span>
+        <span>UN</span>
+      </div>
+      <div class="modal-body">
+        <h2 class="modal-title" id="warningTitle">警告</h2>
+        <p class="modal-text">該檔案有可能汙染系統源，是否讀取?</p>
+        <div class="modal-actions">
+          <button class="modal-btn secondary" type="button" id="warningCancel">取消</button>
+          <button class="modal-btn" type="button" id="warningAgree">同意讀取</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="modal-overlay" id="emptyModal">
+    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="emptyTitle">
+      <div class="modal-head">
+        <span>Archive Response</span>
+        <span>Status / Empty</span>
+      </div>
+      <div class="modal-body">
+        <h2 class="modal-title" id="emptyTitle">讀取結果</h2>
+        <p class="modal-text">目前沒有可讀取檔案。</p>
+        <div class="modal-actions">
+          <button class="modal-btn" type="button" id="emptyClose">關閉</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const fileIcons = document.querySelectorAll('[data-file]');
+    const anomalyIcon = document.querySelector('.icon.anomaly');
+    const warningModal = document.getElementById('warningModal');
+    const emptyModal = document.getElementById('emptyModal');
+    const warningCancel = document.getElementById('warningCancel');
+    const warningAgree = document.getElementById('warningAgree');
+    const emptyClose = document.getElementById('emptyClose');
+    const backBtn = document.getElementById('backBtn');
+
+    function closeModal(modal) {
+      modal.classList.remove('show');
+    }
+
+    function openModal(modal) {
+      modal.classList.add('show');
+    }
+
+    fileIcons.forEach((icon) => {
+      icon.addEventListener('click', (event) => {
+        const isSelected = icon.classList.contains('selected');
+        const isAnomaly = icon.classList.contains('anomaly');
+
+        if (!isSelected) {
+          event.preventDefault();
+          fileIcons.forEach((item) => item.classList.remove('selected'));
+          icon.classList.add('selected');
+          return;
+        }
+
+        if (isAnomaly) {
+          event.preventDefault();
+          openModal(warningModal);
+        }
+      });
+    });
+
+    warningCancel.addEventListener('click', () => {
+      closeModal(warningModal);
+    });
+
+    warningAgree.addEventListener('click', () => {
+      closeModal(warningModal);
+      openModal(emptyModal);
+    });
+
+    emptyClose.addEventListener('click', () => {
+      closeModal(emptyModal);
+    });
+
+    [warningModal, emptyModal].forEach((modal) => {
+      modal.addEventListener('click', (event) => {
+        if (event.target === modal) {
+          closeModal(modal);
+        }
+      });
+    });
+
+    backBtn.addEventListener('click', () => {
+      window.history.back();
+    });
+
+    document.addEventListener('click', (event) => {
+      if (!event.target.closest('[data-file]') && !event.target.closest('.modal')) {
+        fileIcons.forEach((item) => item.classList.remove('selected'));
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>角色檔案列表</title>
+  <link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/components.css">
+<link rel="stylesheet" href="css/character-list.css">
+</head>
+<body>
+
+  <main class="page">
+    <div class="top">
+  <div class="tag-wrap">
+    <button class="tag back-btn" onclick="location.href='dashboard.html'">← BACK</button>
+    <span class="tag">Module / Character</span>
+    <span class="tag">Archive</span>
+  </div>
+
+  <div class="tag-wrap">
+    <span class="tag">Status / Active</span>
+  </div>
+</div>
+
+    <section class="hero">
+      <h1>人物檔案</h1>
+      <p>所有角色的基本資料與關係入口。點擊卡片進入詳細檔案。</p>
+    </section>
+
+ <section class="grid" id="characterGrid">
+  <div class="card" onclick="location.href='character-profile.html?id=tsubame'">
+    <div class="card-img">
+      <img class="card-layer base" src="images/tsubame-normal.png"  style="width:170%;height:170%;object-fit:cover;object-position:90% 30%;">
+      <img class="card-layer hover" src="images/tsubame-hover.png"  style="width:170%;height:170%;object-fit:cover;object-position:90% 30%;">
+    </div>
+    <div class="card-body">
+      <div class="name">姜燕</div>
+    </div>
+  </div>
+
+  <div class="card" onclick="location.href='character-profile.html?id=mary'">
+    <div class="card-img">
+      <img class="card-layer base" src="images/marry-normal.png"  style="width:170%;height:170%;object-fit:cover;left:-30%;top:0%;right:auto;bottom:auto;">
+      <img class="card-layer hover" src="images/marry-hover.png"  style="width:170%;height:170%;object-fit:cover;left:-30%;top:0%;right:auto;bottom:auto;">
+    </div>
+    <div class="card-body">
+      <div class="name">瑪莉亞．薩圖恩</div>
+    </div>
+  </div>
+
+  <div class="card" onclick="location.href='character-profile.html?id=dailey'">
+    <div class="card-img">
+      <img class="card-layer base" src="images/dailey-normal.png" style="width:170%;height:170%;object-fit:cover;object-position:50% 30%;">
+      <img class="card-layer hover" src="images/dailey-hover.png" style="width:170%;height:170%;object-fit:cover;object-position:50% 30%;">
+    </div>
+    <div class="card-body">
+      <div class="name">戴莉</div>
+    </div>
+  </div>
+
+  <div class="card" onclick="location.href='character-profile.html?id=claire'">
+    <div class="card-img">
+      <img class="card-layer base" src="images/claire-normal.png" style="width:200%;height:200%;object-fit:cover;object-position:70% 30%;">
+      <img class="card-layer hover" src="images/claire-hover.png" style="width:200%;height:200%;object-fit:cover;object-position:70% 30%;">
+    </div>
+    <div class="card-body">
+      <div class="name">伍德．克萊爾馮司沃克．布蘭德三世/白金克萊兒</div>
+    </div>
+  </div>
+
+<div class="card" onclick="location.href='character-profile.html?id=rozelia'">
+  <div class="card-img">
+<img class="card-layer base" src="images/rozelia-normal.png"
+     style="width:210%;height:210%;object-fit:cover;left:-75%;top:-60%;right:auto;bottom:auto;">
+
+<img class="card-layer hover" src="images/rozelia-hover.png"
+     style="width:210%;height:210%;object-fit:cover;left:-75%;top:-60%;right:auto;bottom:auto;">
+  </div>
+  <div class="card-body">
+    <div class="name">洛潔莉雅‧米莉雅姆</div>
+  </div>
+</div>
+
+  <div class="card disabled">
+    <div class="card-img">
+      <div class="card-layer base">COMING SOON...</div>
+      <div class="card-layer hover">ACCESS PENDING...</div>
+    </div>
+    <div class="card-body">
+      <div class="name">COMING SOON</div>
+    </div>
+  </div>
+
+</section>
+  </main>
+
+ <script src="js/character-list.js"></script>
+</body>
+</html>

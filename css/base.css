@@ -1,0 +1,56 @@
+ :root {
+      --bg: #0b0705;
+      --line: rgba(224, 122, 58, 0.22);
+      --accent: #e07a3a;
+      --accent-soft: #ffb37f;
+      --text: #f6e4d7;
+      --muted: #c9a894;
+      --mono: "JetBrains Mono", monospace;
+    }
+
+    
+* { box-sizing: border-box; }
+
+body {
+      margin: 0;
+      background:
+        radial-gradient(circle at 20% 0%, rgba(224, 122, 58, 0.10), transparent 30%),
+        linear-gradient(180deg, #050302, #0b0705);
+      color: var(--text);
+      font-family: "Noto Sans TC", sans-serif;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+   body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background: repeating-linear-gradient(
+        to bottom,
+        rgba(255,255,255,0.04) 0px,
+        rgba(255,255,255,0.04) 1px,
+        transparent 1px,
+        transparent 4px
+      );
+      opacity: 0.16;
+      mix-blend-mode: screen;
+      z-index: 20;
+    }
+
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background: linear-gradient(
+        180deg,
+        rgba(255,255,255,0.02),
+        transparent 18%,
+        transparent 82%,
+        rgba(255,255,255,0.015)
+      );
+      opacity: 0.35;
+      z-index: 19;
+    }
