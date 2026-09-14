@@ -451,8 +451,10 @@
   100% { transform: translate(0, 0); filter: brightness(1); }
 }
   </style>
+<link rel="stylesheet" href="css/update-log.css">
+<link rel="stylesheet" href="css/scrollbars.css">
 </head>
-<body>
+<body data-update-page="default-records">
   <main class="page">
     <section class="log-panel" role="dialog" aria-modal="true" aria-labelledby="logAreaTitle">
       <header class="log-header">
@@ -719,5 +721,7 @@ document.getElementById('closeBtn').addEventListener('click', () => {
   }
 });
   </script>
+<script src="js/update-log-data.js"></script>
+<script src="js/update-log.js"></script>
 </body>
 </html>

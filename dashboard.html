@@ -6,10 +6,12 @@
 <title>SUBDOLA LEPUS / TERMINAL / ARCHIVE-01</title>
 
 <link rel="stylesheet" href="css/dashboard.css">
+<link rel="stylesheet" href="css/update-log.css">
+<link rel="stylesheet" href="css/scrollbars.css">
 </head>
 
 
-<body class="theme-sand">
+<body data-update-page="dashboard" class="theme-sand">
 
 <header class="topbar">
 
@@ -76,7 +78,7 @@
 
     <div class="widget-row">
       <span>LAST UPDATE</span>
-      <strong>03 ENTRIES</strong>
+      <strong id="recentUpdateCount">00 ENTRIES</strong>
     </div>
 
     <div class="widget-row">
@@ -251,9 +253,9 @@
       <a class="archive-link" href="records.html">開啟一般檔案紀錄 →</a>
 <a class="archive-link" href="default-file-records.html">普通檔案紀錄 →</a>
 <a class="archive-link" href="area-extra-records.html">區域額外紀錄 →</a>
-<div class="log-item"><div class="log-code">LOG / 001</div><div class="log-main"><strong>更新檔案:創作相簿</strong><p>已更新 7 篇．【戴莉】所羅門武裝~Q版 縱慾王之女。</p></div></div>
-<div class="log-item"><div class="log-code">LOG / 002</div><div class="log-main"><strong>更新檔案:區域額外紀錄</strong><p>已更新 1 篇．【獵者之夜】、【姜燕】｜直至某天繫上束縛。</p></div></div>
-<div class="log-item"><div class="log-code">LOG / 003</div><div class="log-main"><strong>更新檔案:普通檔案紀錄</strong><p>已更新 5 篇．【日常故事】｜想撒嬌日｜姜燕、【日常故事】｜喜歡甜食?｜姜燕、【日常故事】｜長大的孩子，飛出去的鳥｜姜燕、【個人故事】｜剩下不多的時間｜瑪莉亞、【日常故事】｜戴莉的新必殺技｜戴莉。</p></div></div>
+
+
+
 
     </div>
   </section>
@@ -389,6 +391,7 @@
 <button class="task" id="task-restricted" onclick="taskToggle('restricted')">機密情事</button>
   </div>
 
+  <button class="system-tray-icon" id="systemPanelLauncher" type="button" aria-label="系統面板" title="系統面板" aria-controls="reservedSystemPanel" aria-expanded="false">▣</button>
   <div class="tray">
     <span id="clock2">00:00</span><br>
     SESSION / ACTIVE
@@ -400,5 +403,12 @@
 
 <script src="js/dashboard.js"></script>
 
+<script src="js/update-log-data.js"></script>
+<script src="js/update-log.js"></script>
+<aside class="reserved-system-panel" id="reservedSystemPanel" aria-label="系統面板預留位置" hidden>
+  <header><span>SYSTEM PANEL / 預留</span><button id="systemPanelToggle" type="button" aria-expanded="false" aria-controls="systemPanelBody">收合 −</button></header>
+  <div class="system-panel-body" id="systemPanelBody" hidden></div>
+</aside>
+<script src="js/system-panel.js"></script>
 </body>
 </html>

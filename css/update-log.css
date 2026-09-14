@@ -1,0 +1,16 @@
+/* Same LOG rows as the dashboard; scoped so story-reader .log-* styles stay intact. */
+.archive-updates{--update-line:#665a46;--update-text:#eee7da;--update-sub:#b9ad98;width:100%;box-sizing:border-box;margin-top:20px;border-top:1px solid var(--update-line);padding:14px 0 0;flex-shrink:0;text-align:left;min-width:0}
+.archive-updates .update-heading{margin:0 0 4px;color:var(--update-sub);font:500 11px/1.8 "Microsoft JhengHei",sans-serif;letter-spacing:.1em}
+.archive-updates .log-item{display:grid;grid-template-columns:90px minmax(0,1fr);gap:16px;padding:14px 0;border-bottom:1px solid var(--update-line)}
+.archive-updates .log-code{color:var(--update-sub);font-size:8px}
+.archive-updates .log-main strong{display:block;margin-bottom:6px;color:var(--update-text);font-size:11px;font-weight:500;overflow-wrap:anywhere}
+.archive-updates .log-main p{margin:0;color:var(--update-sub);font-size:9px;line-height:1.8;overflow-wrap:anywhere;white-space:pre-wrap}
+.archive-updates .update-time{display:block;color:var(--update-sub);font-size:9px;margin-top:6px}
+.archive-updates .update-empty{color:var(--update-sub);font-size:10px;padding:14px 0;margin:0}
+body[data-update-page="records"] .content,body[data-update-page="areas"] .content{flex-direction:column;overflow:auto;min-height:0}
+body[data-update-page="gallery"] .content{overflow:auto}
+body[data-update-page="characters"] .file-window>.archive-updates,body[data-update-page="restricted"] main.page>.archive-updates{padding:16px 24px;box-sizing:border-box}
+.log-sidebar .archive-updates .log-item{grid-template-columns:1fr;gap:6px}
+@media(max-width:600px){.archive-updates .log-item{grid-template-columns:65px minmax(0,1fr);gap:10px}}
+/* Keep the album usable when a short viewport also contains update rows. */
+body[data-update-page="gallery"] #galleryGrid{min-height:180px;flex:1 0 180px}

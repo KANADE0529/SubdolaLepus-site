@@ -1,0 +1,27 @@
+/* Shared vertical scrollbar appearance; no overflow or scroll-behavior changes. */
+:root, * {
+  scrollbar-width: thin;
+  scrollbar-color: #8a7a5d #211c15;
+}
+/* Chromium/WebKit: use pseudo-elements so thumb hover is also themed.
+   Horizontal scrollbar heights and their existing track/thumb rules stay intact. */
+@supports selector(::-webkit-scrollbar) {
+  :root, * {
+    scrollbar-width: auto !important;
+    scrollbar-color: auto !important;
+  }
+  ::-webkit-scrollbar { width: 8px; }
+  ::-webkit-scrollbar-track:vertical {
+    background: #211c15 !important;
+    border-radius: 1px !important;
+    box-shadow: none !important;
+  }
+  ::-webkit-scrollbar-thumb:vertical {
+    background: #8a7a5d !important;
+    border: 1px solid #211c15 !important;
+    border-radius: 1px !important;
+    box-shadow: none !important;
+  }
+  ::-webkit-scrollbar-thumb:vertical:hover { background: #b6a17a !important; }
+  ::-webkit-scrollbar-corner { background: #211c15; }
+}
