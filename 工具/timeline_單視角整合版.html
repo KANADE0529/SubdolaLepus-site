@@ -1,0 +1,1480 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>角色主線時間線</title>
+  <style>
+    :root {
+      --bg: #070b12;
+      --panel: rgba(9, 10, 13, 0.86);
+      --frame-orange: rgba(200, 90, 28, 0.28);
+      --text-soft: rgba(240, 176, 138, 0.7);
+      --text-main: #fff0e8;
+      --small-edge-gap: 60;
+      --big-edge-gap: 90;
+      --base-x: 340;
+      --min-canvas-width: 2400;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      background: var(--bg);
+      color: white;
+      font-family: Arial, "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+    }
+
+    body {
+      position: relative;
+      overflow: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      opacity: 0.12;
+      background-image:
+        linear-gradient(rgba(255,140,60,.22) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,140,60,.22) 1px, transparent 1px),
+        linear-gradient(rgba(255,140,60,.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,140,60,.08) 1px, transparent 1px);
+      background-size: 36px 36px, 36px 36px, 12px 12px, 12px 12px;
+      pointer-events: none;
+    }
+
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(circle at top left, rgba(200,90,28,.18), transparent 26%),
+        radial-gradient(circle at top right, rgba(255,150,80,.10), transparent 20%),
+        radial-gradient(circle at bottom, rgba(140,50,10,.14), transparent 30%),
+        repeating-linear-gradient(
+          to bottom,
+          rgba(255,255,255,.02) 0px,
+          rgba(255,255,255,.02) 1px,
+          transparent 1px,
+          transparent 3px
+        );
+      pointer-events: none;
+      mix-blend-mode: screen;
+    }
+
+    .page {
+      position: relative;
+      z-index: 1;
+      padding: 24px;
+    }
+
+    .container {
+      max-width: 1900px;
+      margin: 0 auto;
+    }
+
+    .frame {
+      overflow: hidden;
+      border-radius: 30px;
+      border: 1px solid rgba(200,90,28,.28);
+      background: var(--panel);
+      backdrop-filter: blur(16px);
+      box-shadow: 0 0 0 1px rgba(200,90,28,.12) inset, 0 0 60px rgba(120,40,10,.14);
+    }
+
+    .frame-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 16px 24px;
+      border-bottom: 1px solid rgba(200,90,28,.28);
+      background: linear-gradient(90deg, rgba(200,90,28,.10), rgba(0,0,0,0));
+    }
+
+    .eyebrow {
+      font-size: 11px;
+      letter-spacing: 0.38em;
+      text-transform: uppercase;
+      color: var(--text-soft);
+    }
+
+    .title {
+      margin: 8px 0 0;
+      font-size: 32px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      color: var(--text-main);
+    }
+
+    .chips {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      font-size: 11px;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: rgba(240,176,138,.55);
+    }
+
+    .chip {
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(200,90,28,.28);
+    }
+
+    .frame-body {
+      padding: 20px 28px 28px;
+    }
+
+    .route-scroll {
+      position: relative;
+      min-height: 700px;
+      overflow: auto;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(220,120,48,.78) rgba(32,14,10,.92);
+    }
+
+    .route-scroll::-webkit-scrollbar {
+      width: 14px;
+      height: 14px;
+    }
+
+    .route-scroll::-webkit-scrollbar-track {
+      background: linear-gradient(180deg, rgba(20,9,7,.96), rgba(40,18,12,.92));
+      border: 1px solid rgba(200,90,28,.18);
+      border-radius: 999px;
+    }
+
+    .route-scroll::-webkit-scrollbar-thumb {
+      background: linear-gradient(180deg, rgba(150,58,18,.98), rgba(212,102,34,.98));
+      border: 2px solid rgba(26,12,8,.92);
+      border-radius: 999px;
+      box-shadow: 0 0 18px rgba(200,90,28,.24);
+    }
+
+    .route-scroll::-webkit-scrollbar-thumb:hover {
+      background: linear-gradient(180deg, rgba(176,72,24,.98), rgba(232,118,42,.98));
+    }
+
+    .route-scroll::-webkit-scrollbar-corner {
+      background: rgba(18,8,6,.96);
+    }
+
+    .route-label {
+      position: absolute;
+      left: 0;
+      top: 0;
+      font-size: 10px;
+      letter-spacing: 0.42em;
+      text-transform: uppercase;
+      color: rgba(240,176,138,.45);
+    }
+
+    .svg-wrap {
+      padding-top: 48px;
+      padding-bottom: 12px;
+      padding-right: 12px;
+    }
+
+    svg {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+
+    .coming-soon {
+      opacity: .5;
+      animation: csPulse 1.6s ease-in-out infinite;
+    }
+
+    @keyframes csPulse {
+      0% { opacity: .35; }
+      50% { opacity: 1; }
+      100% { opacity: .35; }
+    }
+
+    .node-group.locked-node {
+      cursor: default;
+    }
+
+    .node-group.active-node {
+      cursor: pointer;
+    }
+
+    .node-title,
+    .node-lock-overlay,
+    .node-lock-text,
+    .node-lock-subtext,
+    .node-lock-frame,
+    .node-active-overlay,
+    .node-active-frame,
+    .node-active-subtext {
+      transition: opacity .18s ease, filter .18s ease;
+    }
+
+    .node-lock-overlay,
+    .node-lock-text,
+    .node-lock-subtext,
+    .node-lock-frame,
+    .node-lock-scan,
+    .node-lock-scan-2,
+    .node-active-overlay,
+    .node-active-frame,
+    .node-active-subtext {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .locked-node:hover .node-title,
+    .locked-node:hover .node-deco {
+      opacity: .14;
+    }
+
+    .locked-node:hover .node-body {
+      filter: brightness(.42) saturate(.45);
+    }
+
+    .locked-node:hover .node-lock-overlay {
+      opacity: 1;
+      animation: lockOverlayPulse 1.45s ease-in-out infinite;
+    }
+
+    .locked-node:hover .node-lock-text {
+      opacity: 1;
+      animation: lockTextFlicker 1.2s steps(8, end) infinite;
+    }
+
+    .locked-node:hover .node-lock-subtext {
+      opacity: 1;
+      animation: lockSubtextFade 1.8s ease-in-out infinite;
+    }
+
+    .locked-node:hover .node-lock-frame {
+      opacity: 1;
+      animation: lockFrameFlicker 1.6s linear infinite;
+    }
+
+    .locked-node:hover .node-lock-scan {
+      opacity: 1;
+      animation: lockScanSweep 1.6s linear infinite, lockScanFlicker .28s steps(4, end) infinite, lockScanGlitch 3.2s linear infinite;
+    }
+
+    .locked-node:hover .node-lock-scan-2 {
+      opacity: 1;
+      animation: lockScanSweepAlt 2.4s linear infinite, lockScanFlicker .34s steps(3, end) infinite;
+    }
+
+    @keyframes lockOverlayPulse {
+      0% { opacity: .38; }
+      20% { opacity: .52; }
+      40% { opacity: .46; }
+      60% { opacity: .58; }
+      80% { opacity: .5; }
+      100% { opacity: .38; }
+    }
+
+    @keyframes lockTextFlicker {
+      0% { opacity: .22; }
+      12% { opacity: .78; }
+      25% { opacity: .48; }
+      38% { opacity: .86; }
+      52% { opacity: .55; }
+      66% { opacity: .9; }
+      82% { opacity: .62; }
+      100% { opacity: .28; }
+    }
+
+    @keyframes lockFrameFlicker {
+      0% { opacity: .14; }
+      25% { opacity: .28; }
+      50% { opacity: .22; }
+      75% { opacity: .32; }
+      100% { opacity: .14; }
+    }
+
+    @keyframes lockScanSweep {
+      0% { transform: translateY(-26px) scaleX(.96); opacity: 0; }
+      15% { opacity: .85; }
+      50% { transform: translateY(0px) scaleX(1); opacity: .7; }
+      85% { opacity: .85; }
+      100% { transform: translateY(26px) scaleX(.96); opacity: 0; }
+    }
+
+    @keyframes lockScanSweepAlt {
+      0% { transform: translateY(26px) scaleX(.9); opacity: 0; }
+      20% { opacity: .6; }
+      50% { transform: translateY(0px) scaleX(1.05); opacity: .5; }
+      80% { opacity: .6; }
+      100% { transform: translateY(-26px) scaleX(.9); opacity: 0; }
+    }
+
+    @keyframes lockScanFlicker {
+      0% { filter: drop-shadow(0 0 3px rgba(255,120,48,.2)); opacity: .25; }
+      20% { filter: drop-shadow(0 0 12px rgba(255,150,80,.85)); opacity: .95; }
+      40% { filter: drop-shadow(0 0 6px rgba(255,120,48,.4)); opacity: .55; }
+      60% { filter: drop-shadow(0 0 16px rgba(255,170,90,1)); opacity: 1; }
+      80% { filter: drop-shadow(0 0 8px rgba(255,130,60,.5)); opacity: .7; }
+      100% { filter: drop-shadow(0 0 3px rgba(255,120,48,.2)); opacity: .3; }
+    }
+
+    @keyframes lockScanGlitch {
+      0%, 92%, 100% { opacity: 1; }
+      93% { opacity: 0; }
+      95% { opacity: 1; }
+      96% { opacity: 0; }
+      98% { opacity: 1; }
+    }
+
+    @keyframes lockSubtextFade {
+      0% { opacity: .18; }
+      50% { opacity: .52; }
+      100% { opacity: .18; }
+    }
+
+    .active-node .node-active-glow,
+    .active-node .node-active-overlay,
+    .active-node .node-active-frame,
+    .active-node .node-active-subtext,
+    .active-node .node-active-band,
+    .active-node .node-active-particle {
+      pointer-events: none;
+    }
+
+    .node-active-band,
+    .node-active-particle {
+      opacity: .42;
+      mix-blend-mode: screen;
+    }
+
+    .active-node .node-active-band-1 {
+      animation: activeBandDrift 3.6s linear infinite;
+    }
+
+    .active-node .node-active-band-2 {
+      animation: activeBandDriftAlt 4.4s linear infinite;
+    }
+
+    .active-node .node-active-particle-1 {
+      animation: activeParticleFloat 2.8s ease-in-out infinite;
+    }
+
+    .active-node .node-active-particle-2 {
+      animation: activeParticleFloatAlt 3.2s ease-in-out infinite;
+    }
+
+    .active-node .node-active-particle-3 {
+      animation: activeParticlePulse 2.1s ease-in-out infinite;
+    }
+
+    .active-node:hover .node-body {
+      animation: activeEnterFlash .25s ease-out;
+      filter: brightness(1.32) saturate(1.25) url(#orangeGlow);
+    }
+
+    .active-node:hover .node-title {
+      filter: brightness(1.2);
+    }
+
+    .active-node:hover .node-active-overlay {
+      opacity: .18;
+      filter: blur(2px);
+      animation: activeOverlayBreath 1.6s ease-in-out infinite;
+    }
+
+    .active-node:hover .node-active-frame {
+      opacity: 1;
+      animation: activeFramePulse 1.4s ease-in-out infinite;
+    }
+
+    .active-node:hover .node-active-subtext {
+      opacity: 1;
+      animation: activeSubtextFade 1.5s ease-in-out infinite;
+    }
+
+    @keyframes activePulse {
+      0% { opacity: .42; }
+      50% { opacity: 1; }
+      100% { opacity: .42; }
+    }
+
+    @keyframes activeEnterFlash {
+      0% { filter: brightness(2.2) saturate(1.4); }
+      100% { filter: brightness(1.32) saturate(1.25); }
+    }
+
+    @keyframes activeBandDrift {
+      0% { transform: translateX(-26px); opacity: .16; }
+      50% { opacity: .5; }
+      100% { transform: translateX(26px); opacity: .16; }
+    }
+
+    @keyframes activeBandDriftAlt {
+      0% { transform: translateX(18px); opacity: .12; }
+      50% { opacity: .38; }
+      100% { transform: translateX(-18px); opacity: .12; }
+    }
+
+    @keyframes activeParticleFloat {
+      0% { transform: translate(0px, 2px); opacity: .18; }
+      50% { transform: translate(10px, -4px); opacity: .65; }
+      100% { transform: translate(0px, 2px); opacity: .18; }
+    }
+
+    @keyframes activeParticleFloatAlt {
+      0% { transform: translate(0px, -2px); opacity: .14; }
+      50% { transform: translate(-12px, 5px); opacity: .58; }
+      100% { transform: translate(0px, -2px); opacity: .14; }
+    }
+
+    @keyframes activeParticlePulse {
+      0% { opacity: .18; }
+      50% { opacity: .72; }
+      100% { opacity: .18; }
+    }
+
+    @keyframes activeFramePulse {
+      0% { opacity: .35; }
+      50% { opacity: .95; }
+      100% { opacity: .35; }
+    }
+
+    @keyframes activeOverlayBreath {
+      0% { opacity: .12; }
+      50% { opacity: .26; }
+      100% { opacity: .12; }
+    }
+
+    @keyframes activeSubtextFade {
+      0% { opacity: .28; }
+      50% { opacity: .9; }
+      100% { opacity: .28; }
+    }
+
+    .log-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 30;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 28px;
+    }
+
+    .log-modal.hidden {
+      display: none;
+    }
+
+    .log-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(5, 8, 12, .72);
+      backdrop-filter: blur(10px);
+    }
+
+    .log-panel {
+      position: relative;
+      width: min(1180px, 100%);
+      min-height: 680px;
+      max-height: calc(100vh - 56px);
+      display: grid;
+      grid-template-rows: auto 1fr;
+      border-radius: 28px;
+      overflow: hidden;
+      border: 1px solid rgba(220,120,48,.24);
+      background: linear-gradient(180deg, rgba(14,12,14,.96), rgba(8,9,12,.96));
+      box-shadow: 0 0 0 1px rgba(255,170,120,.06) inset, 0 0 72px rgba(120,40,10,.32);
+    }
+
+    .log-panel::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,140,60,.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,140,60,.08) 1px, transparent 1px);
+      background-size: 18px 18px;
+      opacity: .25;
+      pointer-events: none;
+    }
+
+    .log-header {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 20px 24px;
+      border-bottom: 1px solid rgba(220,120,48,.18);
+      background: linear-gradient(90deg, rgba(200,90,28,.12), rgba(0,0,0,0));
+    }
+
+    .log-kicker {
+      font-size: 11px;
+      letter-spacing: .34em;
+      text-transform: uppercase;
+      color: rgba(240,176,138,.52);
+    }
+
+    .log-area-title {
+      margin: 8px 0 4px;
+      font-size: 30px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      color: #fff3ea;
+    }
+
+    .log-area-subtitle {
+      font-size: 12px;
+      letter-spacing: .24em;
+      text-transform: uppercase;
+      color: rgba(255,210,185,.52);
+    }
+
+    .log-close {
+      width: 44px;
+      height: 44px;
+      border: 1px solid rgba(220,120,48,.22);
+      border-radius: 14px;
+      background: rgba(18,14,13,.88);
+      color: #ffe9dc;
+      font-size: 20px;
+      cursor: pointer;
+    }
+
+    .log-body {
+      position: relative;
+      z-index: 1;
+      min-height: 0;
+      display: grid;
+      grid-template-columns: 260px 1fr;
+    }
+
+    .log-sidebar {
+      padding: 18px;
+      border-right: 1px solid rgba(220,120,48,.14);
+      background: linear-gradient(180deg, rgba(20,14,12,.84), rgba(12,11,13,.74));
+      overflow: auto;
+    }
+
+    .log-sidebar-title {
+      margin: 0 0 14px;
+      font-size: 11px;
+      letter-spacing: .28em;
+      text-transform: uppercase;
+      color: rgba(255,210,185,.48);
+    }
+
+    .log-episode-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .log-episode-btn {
+      width: 100%;
+      text-align: left;
+      padding: 14px 14px 13px;
+      border: 1px solid rgba(220,120,48,.12);
+      border-radius: 16px;
+      background: rgba(24,16,13,.72);
+      color: #ffece1;
+      cursor: pointer;
+      transition: border-color .18s ease, background .18s ease, transform .18s ease, box-shadow .18s ease;
+    }
+
+    .log-episode-btn:hover {
+      transform: translateY(-1px);
+      border-color: rgba(255,160,90,.34);
+      background: rgba(54,28,17,.78);
+    }
+
+    .log-episode-btn.active {
+      border-color: rgba(255,170,100,.42);
+      background: linear-gradient(180deg, rgba(120,48,18,.68), rgba(54,24,15,.82));
+      box-shadow: 0 0 18px rgba(200,90,28,.18);
+    }
+
+    .log-episode-no {
+      display: block;
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      color: #fff3ea;
+    }
+
+    .log-episode-label {
+      display: block;
+      margin-top: 6px;
+      font-size: 11px;
+      letter-spacing: .18em;
+      color: rgba(255,220,198,.62);
+    }
+
+    .log-content {
+      padding: 24px 28px 28px;
+      overflow-y: auto;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    .log-entry-text,
+    .log-entry-title,
+    .log-entry-kicker,
+    .log-content-head {
+      max-width: 100%;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+
+    .log-content.is-switching .log-content-head,
+    .log-content.is-switching .log-entry-text {
+      animation: viewSwapFade .32s ease;
+    }
+
+    .log-content.is-switching::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: linear-gradient(90deg, transparent 0%, rgba(255,140,60,.08) 48%, rgba(255,220,190,.18) 50%, rgba(255,140,60,.08) 52%, transparent 100%);
+      mix-blend-mode: screen;
+      animation: viewScan .32s ease;
+    }
+
+    .log-content-head {
+      padding-bottom: 16px;
+      border-bottom: 1px solid rgba(220,120,48,.12);
+      margin-bottom: 18px;
+    }
+
+    .log-entry-kicker {
+      font-size: 11px;
+      letter-spacing: .28em;
+      text-transform: uppercase;
+      color: rgba(255,210,185,.42);
+    }
+
+    .log-entry-title {
+      margin: 10px 0 0;
+      font-size: 24px;
+      letter-spacing: .06em;
+      color: #fff5ed;
+    }
+
+    .log-entry-text {
+      white-space: pre-wrap;
+      line-height: 2.05;
+      color: rgba(255,236,224,.82);
+      font-size: 17px;
+    }
+
+    .log-empty {
+      color: rgba(255,220,198,.5);
+      letter-spacing: .16em;
+    }
+
+    .log-content::-webkit-scrollbar,
+    .log-sidebar::-webkit-scrollbar {
+      width: 10px;
+    }
+
+    .log-content::-webkit-scrollbar-track,
+    .log-sidebar::-webkit-scrollbar-track {
+      background: rgba(20,14,12,.6);
+      border-radius: 10px;
+    }
+
+    .log-content::-webkit-scrollbar-thumb,
+    .log-sidebar::-webkit-scrollbar-thumb {
+      background: linear-gradient(180deg, rgba(255,140,60,.6), rgba(200,80,30,.6));
+      border-radius: 10px;
+      border: 1px solid rgba(255,180,120,.2);
+    }
+
+    .log-content::-webkit-scrollbar-thumb:hover,
+    .log-sidebar::-webkit-scrollbar-thumb:hover {
+      background: linear-gradient(180deg, rgba(255,160,90,.8), rgba(220,100,40,.8));
+    }
+
+    @keyframes viewSwapFade {
+      0% {
+        opacity: .2;
+        transform: translateY(8px);
+        filter: blur(4px);
+      }
+      55% {
+        opacity: .82;
+        transform: translateY(0);
+        filter: blur(1px);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0);
+        filter: blur(0);
+      }
+    }
+
+    @keyframes viewScan {
+      0% {
+        opacity: 0;
+        transform: translateX(-28%);
+      }
+      30% {
+        opacity: .85;
+      }
+      100% {
+        opacity: 0;
+        transform: translateX(28%);
+      }
+    }
+
+    @media (max-width: 900px) {
+      .log-modal {
+        padding: 14px;
+      }
+
+      .log-panel {
+        min-height: auto;
+        max-height: calc(100vh - 28px);
+      }
+
+      .log-body {
+        grid-template-columns: 1fr;
+      }
+
+      .log-sidebar {
+        max-height: 220px;
+        border-right: 0;
+        border-bottom: 1px solid rgba(220,120,48,.14);
+      }
+
+      .frame-header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .title {
+        font-size: 24px;
+      }
+
+      .frame-body {
+        padding: 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <div class="container">
+      <section class="frame">
+        <div class="frame-header">
+          <div>
+            <div class="eyebrow">Main Story Route Interface</div>
+            <h1 class="title">角色主線時間線</h1>
+          </div>
+          <div class="chips">
+            <span class="chip">Preview</span>
+            <span class="chip">Timeline Only</span>
+            <span class="chip">Tech Frame</span>
+          </div>
+        </div>
+        <div class="frame-body">
+          <div class="route-scroll" id="routeScroll">
+            <div class="route-label">Route Mapping</div>
+            <div class="svg-wrap" id="svgWrap"></div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <div class="log-modal hidden" id="logModal" aria-hidden="true">
+    <div class="log-backdrop" id="logBackdrop"></div>
+    <section class="log-panel" role="dialog" aria-modal="true" aria-labelledby="logAreaTitle">
+      <header class="log-header">
+        <div>
+          <div class="log-kicker">Operation Log</div>
+          <h2 class="log-area-title" id="logAreaTitle">作戰日誌</h2>
+          <div class="log-area-subtitle" id="logAreaSubtitle">區域記錄</div>
+        </div>
+        <button class="log-close" id="logCloseBtn" type="button" aria-label="關閉">×</button>
+      </header>
+      <div class="log-body">
+        <aside class="log-sidebar">
+          <h3 class="log-sidebar-title">章節索引</h3>
+          <div class="log-episode-list" id="logEpisodeList"></div>
+        </aside>
+        <article class="log-content">
+          <div class="log-content-head">
+            <div class="log-entry-kicker" id="logEntryKicker">作戰紀錄</div>
+            <h3 class="log-entry-title" id="logEntryTitle">請選擇章節</h3>
+          </div>
+          <div class="log-entry-text" id="logEntryText">目前沒有內容。</div>
+        </article>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const CONFIG = {
+      glowColor: 'rgba(255,138,56,.34)',
+      frameOrange: 'rgba(200,90,28,.28)',
+      mainRouteLine: 'rgba(255,180,120,.95)',
+      baseX: 435,
+      smallEdgeGap: 60,
+      bigEdgeGap: 90,
+      minCanvasWidth: 2400,
+    };
+
+    const INTERACTIVE_UNLOCKED_NODE_IDS = new Set(['g1-1', 'g1-4']);
+
+    const LOG_DATA = {
+      'g1-1': {
+        area: '南極',
+        subtitle: '起始章節',
+        episodes: [
+          {
+            no: '01',
+            label: '冰原登入',
+            content: `　　姜燕一行人在低溫暴風中進入南極外圍觀測區，初始掃描顯示周邊設施仍殘留低頻能源反應。
+
+　　瑪莉亞要求全隊保持短距離通訊鏈，戴莉則先行確認冰層下方的異常熱源。隊伍在視野極差的暴雪中逐步推進，並開始建立第一份作戰記錄。`
+          },
+          {
+            no: '02',
+            label: '異常訊號',
+            content: `　　第二次檢測時，南極站點回傳了不屬於現有編碼庫的訊號片段。
+
+　　訊號來源短暫出現在地平線下方，像是某種仍在待命的舊型設施。姜燕決定先封存原始資料，避免在不明狀態下直接啟動連線。`
+          }
+        ]
+      },
+      'g1-4': {
+        area: '殉教者山丘',
+        subtitle: '主線開放',
+        episodes: [
+          {
+            no: '01',
+            label: '山丘入口',
+            content: `　　「戴莉，這個是什麼？」
+　　我有一個煩惱。
+　　「戴莉，為什麼它會這樣？」
+　　非常大的煩惱。
+　　「戴莉，這個好好看喔！」
+　　由一個煩惱分裂成無數小煩惱的超級大煩惱。
+　　「戴莉，能不能買這個啊？」
+　　算了，不能算煩惱，只能算天降的大麻煩。
+　　「戴莉——」
+　　我毫不猶豫的揮出我的拳頭，沒有收力氣、沒有任何懸念、沒有任何猶豫和質疑，只有滿腔的憤怒和暴躁：「叫叫叫！叫叫叫！妳是雞啊？咕咕咕的叫個不停！」
+　　一拳揮在那粉色的腦袋上，姜燕一邊喊著「好痛戴莉為什麼打我？」一邊露出楚楚可憐的樣子，但我不會被她的外表所蒙蔽。
+　　不如說姜燕就是一個外表詐騙犯，表面上不說話看起來給人相當聰明且狠毒的存在，但可惜只要一開口就會覺得她是個腦袋萎縮、智商有缺陷、且非常我行我素的小朋友。
+　　不對，說是人太抬舉她了，她是一隻豬頭、是個猴子、是條狗。
+　　詐騙集團的信念講求耐心、毅力且技巧性的引導，在此前提下我練就了完美的耐心——但這一切在姜燕這頭豬的面前沒有任何用處，我只要被她纏上耐心就會迅速見底然後揮出我的拳頭。
+　　雖然我平時比較常和瑪莉亞吵架……最近倒是沒有，大概是因為我們兩人關係緩和了許多、所以不怎麼會吵架了。但姜燕給人的那種煩躁的感覺始終揮散不去，而且總感覺只有我受不了她。
+　　「戴莉……」她又用可憐兮兮的表情看著我，但我不會被她迷惑、因為她一直都是這樣，給人添麻煩、然後裝可憐、最後大家都會原諒她。
+　　天底下哪有這麼好的事情？
+　　如果有的話我搞詐騙的時候怎麼沒遇過？
+　　總而言之，我絕對不會對她心軟。
+　　但現實是，我還是得帶著她繼續往前走。
+　　因為任務還沒結束。
+　　而這座山丘，還在等著我們。`
+          },
+          {
+            no: '02',
+            label: '地下回音',
+            content: `　　夜色完全壓下來之後，風向變了。
+　　原本沿著山壁往上吹的冷風，忽然改成往地底灌進去，像是整座山丘底下藏著某種會呼吸的空洞。
+　　我們停在坡道邊緣，沒有誰先開口。
+　　因為這種時候，不講話反而比較容易聽見真正的聲音。
+　　第一次回音傳上來的時候，很輕。
+　　像金屬片互相敲到。
+　　第二次就不一樣了。
+　　那聲音帶著規律，間隔固定，甚至不像自然形成的震動。
+　　我低頭看了一眼地面。
+　　碎石沒有跳動，灰塵也沒有飄起來。
+　　這代表聲音不是從表層傳遞。
+　　它來自更深的地方。
+　　姜燕先記錄下時間。
+　　瑪莉亞開始對照聲紋。
+　　而我只覺得那東西很吵。
+　　不是聲音很大，而是那種存在感讓人煩躁。
+　　像有人躲在看不見的地方，用指節反覆敲門。
+　　一下。
+　　一下。
+　　一下。
+　　規律得讓人火大。
+　　如果地下真的有東西，那就直接打開來看。
+　　但姜燕不准。
+　　她要先確認結構穩定、確認撤退路線、確認上方沒有陷落風險。
+　　我知道她的判斷沒有錯。
+　　可我還是討厭這種被迫站著等的感覺。
+　　回音持續了整整七分鐘。
+　　沒有變快，也沒有變慢。
+　　像某種設備正在最低功耗下維持運作。
+　　又像是在確認，外面是不是終於有人來了。`
+          }
+        ]
+      }
+    };
+
+    const ALIGN_RULES = [
+      { targetGroup: 'g1', type: 'alignToNode', sourceGroup: 'g3', sourceNodeId: 'g3-3' },
+      { targetGroup: 'g2', type: 'alignToNode', sourceGroup: 'g1', sourceNodeId: 'g1-4' },
+    ];
+
+    const GAP_RULES = [
+      { groupId: 'g2', afterNodeId: 'g2-1', multiplier: 0.25 },
+      { groupId: 'g2', afterNodeId: 'g2-2', multiplier: 1.2 },
+      { groupId: 'g1', afterNodeId: 'g1-5', multiplier: 0.875 },
+    ];
+
+    const SHIFT_RULES = [
+      { groupId: 'g1', afterNodeId: 'g1-4', shiftX: 25 },
+    ];
+
+    const characters = [
+      {
+        id: 'g1',
+        name: '姜燕、瑪莉亞、戴莉',
+        y: 330,
+        smallGap: 100,
+        bigGap: 160,
+        nodes: [
+          { id: 'g1-1', title: '南極', w: 170 },
+          { id: 'g1-2', title: '國際機場', w: 170 },
+          { id: 'g1-3', title: '賽騰城', w: 170 },
+          { id: 'g1-4', title: '殉教者山丘', w: 400 },
+          { id: 'g1-5', title: '獵者之夜', w: 280 },
+          { id: 'g1-6', title: '仁川港', w: 288 },
+          { id: 'g1-7', title: 'COMING SOON...', w: 288 },
+        ],
+      },
+      {
+        id: 'g2',
+        name: '洛潔莉雅',
+        y: 150,
+        nodes: [
+          { id: 'g2-1', title: '地下監管所', w: 170 },
+          { id: 'g2-2', title: '世界和平之門', w: 170 },
+          { id: 'g2-3', title: '獵者之夜', w: 204 },
+        ],
+      },
+      {
+        id: 'g3',
+        name: '克萊兒',
+        y: 510,
+        nodes: [
+          { id: 'g3-1', title: '首爾', w: 190 },
+          { id: 'g3-1a', title: '九老車站', w: 190 },
+          { id: 'g3-2', title: '國際機場', w: 190 },
+          { id: 'g3-3', title: '世界和平之門', w: 400 },
+          { id: 'g3-4', title: '殉教者山丘', w: 221 },
+        ],
+      },
+    ];
+
+    function getGroupById(groupId) {
+      return characters.find((group) => group.id === groupId);
+    }
+
+    function getNodeBaseGap(group, node) {
+      return node.w >= 280
+        ? (group.bigGap ?? CONFIG.bigEdgeGap)
+        : (group.smallGap ?? CONFIG.smallEdgeGap);
+    }
+
+    function getNodeStartXInGroup(group, nodeId) {
+      let currentX = CONFIG.baseX;
+      for (const node of group.nodes) {
+        if (node.id === nodeId) return currentX;
+        currentX += node.w + getNodeBaseGap(group, node);
+      }
+      return CONFIG.baseX;
+    }
+
+    function getNodeVisualCenterOffset(node) {
+      if (!node) return 0;
+      if (node.w >= 380) return -6;
+      if (node.w >= 280) return -5;
+      if (node.w >= 200) return -4;
+      return -3;
+    }
+
+    function getNodeTopCenterX(node) {
+      return node.x + node.w / 2 + getNodeVisualCenterOffset(node);
+    }
+
+    function getNodeBottomCenterX(node) {
+      return node.x + node.w / 2 + getNodeVisualCenterOffset(node);
+    }
+
+    function getNodeRightMidX(node) {
+      return node.x + node.w;
+    }
+
+    function getNodeRightMidY(node) {
+      return node.y + 9;
+    }
+
+    function getGroupStartX(group) {
+      const rule = ALIGN_RULES.find((item) => item.targetGroup === group.id);
+      if (!rule) return CONFIG.baseX;
+      if (rule.type !== 'alignToNode') return CONFIG.baseX;
+
+      const sourceGroup = getGroupById(rule.sourceGroup);
+      if (!sourceGroup) return CONFIG.baseX;
+
+      if (group.id === 'g1') {
+        const sourceNode = sourceGroup.nodes.find((n) => n.id === rule.sourceNodeId);
+        const targetNode = group.nodes.find((n) => n.id === 'g1-4');
+        if (!sourceNode || !targetNode) return CONFIG.baseX;
+        const sourceStartX = getNodeStartXInGroup(sourceGroup, rule.sourceNodeId);
+        const sourceCenter = sourceStartX + sourceNode.w / 2 + getNodeVisualCenterOffset(sourceNode);
+        const targetCenterFromBase = getNodeStartXInGroup(group, 'g1-4') + targetNode.w / 2 + getNodeVisualCenterOffset(targetNode);
+        return CONFIG.baseX + (sourceCenter - targetCenterFromBase);
+      }
+
+      if (group.id === 'g2') {
+        const sourceNode = sourceGroup.nodes.find((n) => n.id === rule.sourceNodeId);
+        const firstNode = group.nodes[0];
+        if (!sourceNode || !firstNode) return CONFIG.baseX;
+        const sourceStartX = getNodeStartXInGroup(sourceGroup, rule.sourceNodeId);
+        const sourceCenter = sourceStartX + sourceNode.w / 2 + getNodeVisualCenterOffset(sourceNode);
+        const firstCenterFromBase = getNodeStartXInGroup(group, firstNode.id) + firstNode.w / 2 + getNodeVisualCenterOffset(firstNode);
+        return CONFIG.baseX + (sourceCenter - firstCenterFromBase) - 175;
+      }
+
+      return CONFIG.baseX;
+    }
+
+    function applyGapRule(group, node, baseGap) {
+      const rule = GAP_RULES.find((item) => item.groupId === group.id && item.afterNodeId === node.id);
+      return rule ? baseGap * rule.multiplier : baseGap;
+    }
+
+    function getShiftAfterNode(group, node) {
+      return SHIFT_RULES
+        .filter((item) => item.groupId === group.id && item.afterNodeId === node.id)
+        .reduce((sum, item) => sum + item.shiftX, 0);
+    }
+
+    function buildNodes() {
+      return characters.flatMap((group) => {
+        let currentX = getGroupStartX(group);
+        let accumulatedShiftX = 0;
+        return group.nodes.map((node) => {
+          const x = currentX + accumulatedShiftX;
+          const baseGap = getNodeBaseGap(group, node);
+          const edgeGap = applyGapRule(group, node, baseGap);
+          currentX += node.w + edgeGap;
+          accumulatedShiftX += getShiftAfterNode(group, node);
+          return { ...node, x, y: group.y, h: 78 };
+        });
+      });
+    }
+
+    function pathEl(d, attrs = {}) {
+      const el = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      el.setAttribute('d', d);
+      Object.entries(attrs).forEach(([key, value]) => el.setAttribute(key, value));
+      return el;
+    }
+
+    function textEl(x, y, content, attrs = {}) {
+      const el = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      el.setAttribute('x', x);
+      el.setAttribute('y', y);
+      el.textContent = content;
+      Object.entries(attrs).forEach(([key, value]) => el.setAttribute(key, value));
+      return el;
+    }
+
+    function createNodeShapePath(node) {
+      return `M ${node.x} ${node.y - node.h / 2 + 10} L ${node.x + 16} ${node.y - node.h / 2} L ${node.x + node.w - 22} ${node.y - node.h / 2} L ${node.x + node.w} ${node.y - node.h / 2 + 18} L ${node.x + node.w} ${node.y + node.h / 2} L ${node.x + 18} ${node.y + node.h / 2} L ${node.x} ${node.y + node.h / 2 - 14} Z`;
+    }
+
+    function isLockedNode(node) {
+      return node.title !== 'COMING SOON...' && !INTERACTIVE_UNLOCKED_NODE_IDS.has(node.id);
+    }
+
+    function isActiveNode(node) {
+      return INTERACTIVE_UNLOCKED_NODE_IDS.has(node.id);
+    }
+
+    function openLog(nodeId) {
+      const data = LOG_DATA[nodeId];
+      if (!data) return;
+      const modal = document.getElementById('logModal');
+      modal.classList.remove('hidden');
+      modal.setAttribute('aria-hidden', 'false');
+      document.getElementById('logAreaTitle').textContent = data.area;
+      document.getElementById('logAreaSubtitle').textContent = data.subtitle ?? '作戰記錄';
+      renderEpisodeList(nodeId);
+      renderEpisodeContent(nodeId, 0);
+      document.querySelector('.log-content')?.scrollTo({ top: 0, behavior: 'auto' });
+    }
+
+    function closeLog() {
+      const modal = document.getElementById('logModal');
+      modal.classList.add('hidden');
+      modal.setAttribute('aria-hidden', 'true');
+    }
+
+    let switchAnimationTimer = null;
+
+    function playLogSwitchAnimation() {
+      const contentEl = document.querySelector('.log-content');
+      if (!contentEl) return;
+
+      contentEl.classList.remove('is-switching');
+      void contentEl.offsetWidth;
+      contentEl.classList.add('is-switching');
+
+      clearTimeout(switchAnimationTimer);
+      switchAnimationTimer = window.setTimeout(() => {
+        contentEl.classList.remove('is-switching');
+      }, 340);
+    }
+
+    function renderEpisodeList(nodeId) {
+      const data = LOG_DATA[nodeId];
+      const listEl = document.getElementById('logEpisodeList');
+      listEl.innerHTML = '';
+
+      if (!data || !Array.isArray(data.episodes) || data.episodes.length === 0) {
+        listEl.innerHTML = '<div class="log-empty">尚無日誌資料</div>';
+        return;
+      }
+
+      data.episodes.forEach((episode, index) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = `log-episode-btn${index === 0 ? ' active' : ''}`;
+        button.innerHTML = `<span class="log-episode-no">${episode.no}</span><span class="log-episode-label">${episode.label}</span>`;
+        button.addEventListener('click', () => {
+          renderEpisodeContent(nodeId, index);
+          document.querySelector('.log-content')?.scrollTo({ top: 0, behavior: 'smooth' });
+          playLogSwitchAnimation();
+          [...listEl.querySelectorAll('.log-episode-btn')].forEach((el) => el.classList.remove('active'));
+          button.classList.add('active');
+        });
+        listEl.appendChild(button);
+      });
+    }
+
+    function renderEpisodeContent(nodeId, episodeIndex) {
+      const data = LOG_DATA[nodeId];
+      const episode = data?.episodes?.[episodeIndex];
+      if (!episode) {
+        document.getElementById('logEntryKicker').textContent = '作戰紀錄';
+        document.getElementById('logEntryTitle').textContent = '目前沒有內容';
+        document.getElementById('logEntryText').textContent = '此區域尚未寫入作戰日誌。';
+        return;
+      }
+      document.getElementById('logEntryKicker').textContent = '作戰紀錄';
+      document.getElementById('logEntryTitle').textContent = `${episode.no}｜${episode.label}`;
+      document.getElementById('logEntryText').textContent = episode.content;
+    }
+
+    function bindLogModalEvents() {
+      document.getElementById('logCloseBtn').addEventListener('click', closeLog);
+      document.getElementById('logBackdrop').addEventListener('click', closeLog);
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') closeLog();
+      });
+    }
+
+    function render() {
+      const allNodes = buildNodes();
+      const contentWidth = Math.max(CONFIG.minCanvasWidth, Math.max(...allNodes.map((node) => node.x + node.w)) + 180);
+
+      const svgWrap = document.getElementById('svgWrap');
+      svgWrap.style.minWidth = contentWidth + 'px';
+
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('viewBox', `0 0 ${contentWidth} 620`);
+      svg.setAttribute('aria-label', '角色主線時間線');
+
+      const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+      defs.innerHTML = `
+        <filter id="orangeGlow" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="3.4" result="blur"></feGaussianBlur>
+          <feMerge>
+            <feMergeNode in="blur"></feMergeNode>
+            <feMergeNode in="SourceGraphic"></feMergeNode>
+          </feMerge>
+        </filter>
+        <linearGradient id="nodeFill" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#7f2200"></stop>
+          <stop offset="60%" stop-color="#a64012"></stop>
+          <stop offset="100%" stop-color="#c85a1c"></stop>
+        </linearGradient>
+      `;
+      svg.appendChild(defs);
+
+      svg.appendChild(pathEl('M 22 40 L 132 40', { stroke: 'rgba(255,170,120,.34)', 'stroke-width': '2' }));
+      svg.appendChild(pathEl('M 42 20 L 42 92', { stroke: 'rgba(255,170,120,.34)', 'stroke-width': '2' }));
+      svg.appendChild(pathEl(`M ${contentWidth - 132} 580 L ${contentWidth - 22} 580`, { stroke: 'rgba(255,170,120,.34)', 'stroke-width': '2' }));
+      svg.appendChild(pathEl(`M ${contentWidth - 42} 508 L ${contentWidth - 42} 580`, { stroke: 'rgba(255,170,120,.34)', 'stroke-width': '2' }));
+      svg.appendChild(pathEl(`M 70 70 L ${contentWidth - 70} 70`, { stroke: 'rgba(200,90,28,.12)', 'stroke-width': '1' }));
+      svg.appendChild(pathEl(`M 70 560 L ${contentWidth - 70} 560`, { stroke: 'rgba(200,90,28,.12)', 'stroke-width': '1' }));
+
+      characters.forEach((group) => {
+        const groupNodes = allNodes.filter((n) => n.y === group.y);
+        const isMainRoute = group.id === 'g1';
+        const labelX = 28;
+        const labelW = 250;
+
+        if (groupNodes.length > 0) {
+          const first = groupNodes[0];
+          svg.appendChild(pathEl(`M ${labelX + labelW} ${group.y} L ${first.x} ${first.y}`, {
+            stroke: isMainRoute ? CONFIG.mainRouteLine : 'rgba(255,140,60,.35)',
+            'stroke-width': isMainRoute ? '6' : '5',
+            'stroke-linecap': 'round',
+            fill: 'none'
+          }));
+        }
+
+        for (let i = 0; i < groupNodes.length - 1; i += 1) {
+          const a = groupNodes[i];
+          const b = groupNodes[i + 1];
+          svg.appendChild(pathEl(`M ${a.x + a.w} ${a.y} L ${b.x} ${b.y}`, {
+            stroke: isMainRoute ? CONFIG.mainRouteLine : 'rgba(255,140,60,.35)',
+            'stroke-width': isMainRoute ? '6' : '5',
+            'stroke-linecap': 'round',
+            fill: 'none'
+          }));
+        }
+      });
+
+      characters.forEach((group) => {
+        const labelX = 28;
+        const labelW = 250;
+        const labelH = 78;
+        const labelTop = group.y - labelH / 2;
+
+        svg.appendChild(pathEl(
+          `M ${labelX} ${labelTop + 10} L ${labelX + 16} ${labelTop} L ${labelX + labelW - 22} ${labelTop} L ${labelX + labelW} ${labelTop + 18} L ${labelX + labelW} ${labelTop + labelH} L ${labelX + 18} ${labelTop + labelH} L ${labelX} ${labelTop + labelH - 14} Z`,
+          { fill: 'rgba(22,11,8,.96)', stroke: CONFIG.frameOrange, 'stroke-width': '1.2' }
+        ));
+
+        svg.appendChild(pathEl(`M ${labelX + 12} ${labelTop + 12} L ${labelX + 34} ${labelTop + 12}`, {
+          stroke: 'rgba(255,170,120,.34)', 'stroke-width': '1.6'
+        }));
+
+        svg.appendChild(pathEl(`M ${labelX + labelW - 40} ${labelTop + labelH - 12} L ${labelX + labelW - 14} ${labelTop + labelH - 12}`, {
+          stroke: 'rgba(255,170,120,.28)', 'stroke-width': '1.6'
+        }));
+
+        svg.appendChild(textEl(labelX + labelW / 2, group.y + 5, group.name, {
+          'text-anchor': 'middle', fill: '#fff1e7', 'font-size': '20', 'font-weight': '700', 'letter-spacing': '1.2'
+        }));
+      });
+
+      const g2Node = allNodes.find((n) => n.id === 'g2-3');
+      const g1Node = allNodes.find((n) => n.id === 'g1-5');
+      if (g2Node && g1Node) {
+        const startX = g2Node.x + g2Node.w;
+        const startY = g2Node.y;
+        const endX = getNodeTopCenterX(g1Node);
+        const endY = g1Node.y - g1Node.h / 2;
+        const r = 20;
+        const cornerX = endX;
+        const cornerY = startY;
+        svg.appendChild(pathEl(`M ${startX} ${startY} L ${cornerX - r} ${cornerY} Q ${cornerX} ${cornerY} ${cornerX} ${cornerY + r} L ${cornerX} ${endY}`, {
+          stroke: 'rgba(255,180,120,.95)', 'stroke-width': '6', 'stroke-linecap': 'round', fill: 'none'
+        }));
+      }
+
+      const g1IncheonNode = allNodes.find((n) => n.id === 'g1-6');
+      const g3HillNode = allNodes.find((n) => n.id === 'g3-4');
+      if (g1IncheonNode && g3HillNode) {
+        const startX = getNodeBottomCenterX(g1IncheonNode);
+        const startY = g1IncheonNode.y + g1IncheonNode.h / 2;
+        const endX = getNodeRightMidX(g3HillNode);
+        const endY = getNodeRightMidY(g3HillNode);
+        const r = 20;
+        const cornerX = startX;
+        const cornerY = endY;
+        svg.appendChild(pathEl(`M ${startX} ${startY} L ${cornerX} ${cornerY - r} Q ${cornerX} ${cornerY} ${cornerX - r} ${cornerY} L ${endX} ${cornerY}`, {
+          stroke: 'rgba(255,180,120,.95)', 'stroke-width': '6', 'stroke-linecap': 'round', fill: 'none'
+        }));
+      }
+
+      allNodes.forEach((node) => {
+        const isComing = node.title === 'COMING SOON...';
+        const lockedNode = isLockedNode(node);
+        const activeNode = isActiveNode(node);
+        const nodePath = createNodeShapePath(node);
+        const nodeGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        nodeGroup.setAttribute('class', `node-group${lockedNode ? ' locked-node' : ''}${activeNode ? ' active-node' : ''}`);
+
+        const nodeBody = pathEl(nodePath, isComing
+          ? {
+              fill: 'none', stroke: 'rgba(255,180,120,.55)', 'stroke-width': '1.6', 'stroke-dasharray': '6 4', class: 'coming-soon'
+            }
+          : {
+              fill: 'url(#nodeFill)',
+              stroke: activeNode ? 'rgba(255,210,160,.6)' : 'rgba(255,190,140,.28)',
+              'stroke-width': activeNode ? '1.4' : '1',
+              filter: 'url(#orangeGlow)',
+              class: 'node-body'
+            }
+        );
+        nodeGroup.appendChild(nodeBody);
+
+        if (!isComing) {
+          nodeGroup.appendChild(pathEl(`M ${node.x + 12} ${node.y - node.h / 2 + 12} L ${node.x + 34} ${node.y - node.h / 2 + 12}`, {
+            stroke: 'rgba(255,220,200,.24)', 'stroke-width': '1.6', class: 'node-deco'
+          }));
+          nodeGroup.appendChild(pathEl(`M ${node.x + node.w - 40} ${node.y + node.h / 2 - 12} L ${node.x + node.w - 14} ${node.y + node.h / 2 - 12}`, {
+            stroke: 'rgba(255,220,200,.20)', 'stroke-width': '1.6', class: 'node-deco'
+          }));
+        }
+
+        const titleText = textEl(node.x + node.w / 2, node.y + 5, node.title, {
+          'text-anchor': 'middle',
+          fill: activeNode ? '#fff8f2' : (isComing ? '#ffd8c2' : '#fff4ea'),
+          'font-size': '12',
+          'font-weight': activeNode ? '700' : '600',
+          'letter-spacing': isComing ? '2.4' : '1.2',
+          class: isComing ? 'coming-soon node-title' : 'node-title'
+        });
+        titleText.style.textShadow = activeNode ? '0 0 18px rgba(255,140,70,.55)' : `0 0 14px ${CONFIG.glowColor}`;
+        nodeGroup.appendChild(titleText);
+
+        if (activeNode) {
+          const activeClipId = `active-clip-${node.id}`;
+          const clipPath = document.createElementNS('http://www.w3.org/2000/svg', 'clipPath');
+          clipPath.setAttribute('id', activeClipId);
+          clipPath.appendChild(pathEl(nodePath));
+          defs.appendChild(clipPath);
+
+          const activeGlow = pathEl(nodePath, {
+            fill: 'none', stroke: 'rgba(255,210,150,1)', 'stroke-width': '5.4', class: 'node-active-glow'
+          });
+          activeGlow.style.filter = 'blur(16px)';
+          activeGlow.style.opacity = '.95';
+          activeGlow.style.animation = 'activePulse 1.2s ease-in-out infinite';
+          nodeGroup.appendChild(activeGlow);
+
+          const activeBand1 = pathEl(`M ${node.x + 22} ${node.y - 10} L ${node.x + node.w - 30} ${node.y - 10}`, {
+            stroke: 'rgba(255,220,180,.42)', 'stroke-width': '1.4', 'stroke-linecap': 'round', class: 'node-active-band node-active-band-1', 'clip-path': `url(#${activeClipId})`
+          });
+          activeBand1.style.filter = 'drop-shadow(0 0 8px rgba(255,170,90,.25))';
+          nodeGroup.appendChild(activeBand1);
+
+          const activeBand2 = pathEl(`M ${node.x + 34} ${node.y + 12} L ${node.x + node.w - 42} ${node.y + 12}`, {
+            stroke: 'rgba(255,210,165,.28)', 'stroke-width': '1.1', 'stroke-linecap': 'round', class: 'node-active-band node-active-band-2', 'clip-path': `url(#${activeClipId})`
+          });
+          activeBand2.style.filter = 'drop-shadow(0 0 6px rgba(255,150,80,.18))';
+          nodeGroup.appendChild(activeBand2);
+
+          const p1 = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+          p1.setAttribute('cx', node.x + 36); p1.setAttribute('cy', node.y - 4); p1.setAttribute('r', '2');
+          p1.setAttribute('fill', 'rgba(255,230,210,.58)'); p1.setAttribute('class', 'node-active-particle node-active-particle-1');
+          p1.setAttribute('clip-path', `url(#${activeClipId})`); p1.style.filter = 'drop-shadow(0 0 6px rgba(255,170,100,.22))';
+          nodeGroup.appendChild(p1);
+
+          const p2 = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+          p2.setAttribute('cx', node.x + node.w - 52); p2.setAttribute('cy', node.y + 8); p2.setAttribute('r', '1.8');
+          p2.setAttribute('fill', 'rgba(255,220,196,.42)'); p2.setAttribute('class', 'node-active-particle node-active-particle-2');
+          p2.setAttribute('clip-path', `url(#${activeClipId})`); p2.style.filter = 'drop-shadow(0 0 5px rgba(255,150,78,.18))';
+          nodeGroup.appendChild(p2);
+
+          const p3 = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+          p3.setAttribute('cx', node.x + node.w / 2 + 16); p3.setAttribute('cy', node.y - 14); p3.setAttribute('r', '1.8');
+          p3.setAttribute('fill', 'rgba(255,235,218,.5)'); p3.setAttribute('class', 'node-active-particle node-active-particle-3');
+          p3.setAttribute('clip-path', `url(#${activeClipId})`); p3.style.filter = 'drop-shadow(0 0 7px rgba(255,175,105,.24))';
+          nodeGroup.appendChild(p3);
+
+          nodeGroup.appendChild(pathEl(nodePath, {
+            fill: 'rgba(255,200,140,.18)', stroke: 'rgba(255,220,185,.28)', 'stroke-width': '1.1', class: 'node-active-overlay'
+          }));
+
+          nodeGroup.appendChild(pathEl(`M ${node.x + 16} ${node.y - node.h / 2 + 14} L ${node.x + 48} ${node.y - node.h / 2 + 14}`, {
+            stroke: 'rgba(255,220,190,.48)', 'stroke-width': '1.5', class: 'node-active-frame'
+          }));
+
+          nodeGroup.appendChild(pathEl(`M ${node.x + node.w - 54} ${node.y + node.h / 2 - 14} L ${node.x + node.w - 18} ${node.y + node.h / 2 - 14}`, {
+            stroke: 'rgba(255,220,190,.42)', 'stroke-width': '1.5', class: 'node-active-frame'
+          }));
+
+          const activeSubtext = textEl(node.x + node.w / 2, node.y + 21, node.id === 'g1-1' ? '起始章節' : '主線開放', {
+            'text-anchor': 'middle', fill: 'rgba(255,222,200,.62)', 'font-size': '9.5', 'font-weight': '700', 'letter-spacing': '2.4', class: 'node-active-subtext'
+          });
+          activeSubtext.style.textShadow = '0 0 8px rgba(255,145,78,.18)';
+          nodeGroup.appendChild(activeSubtext);
+          nodeGroup.addEventListener('click', () => openLog(node.id));
+        }
+
+        if (lockedNode) {
+          nodeGroup.appendChild(pathEl(nodePath, {
+            fill: 'rgba(8,10,13,.78)', stroke: 'rgba(255,176,128,.18)', 'stroke-width': '1.1', class: 'node-lock-overlay'
+          }));
+
+          nodeGroup.appendChild(pathEl(`M ${node.x + 20} ${node.y - node.h / 2 + 18} L ${node.x + node.w - 26} ${node.y - node.h / 2 + 18}`, {
+            stroke: 'rgba(255,185,150,.18)', 'stroke-width': '1.1', class: 'node-lock-frame'
+          }));
+
+          nodeGroup.appendChild(pathEl(`M ${node.x + 24} ${node.y + node.h / 2 - 18} L ${node.x + node.w - 20} ${node.y + node.h / 2 - 18}`, {
+            stroke: 'rgba(255,185,150,.14)', 'stroke-width': '1.1', class: 'node-lock-frame'
+          }));
+
+          const lockScan = pathEl(`M ${node.x + 22} ${node.y} L ${node.x + node.w - 22} ${node.y}`, {
+            stroke: 'rgba(255,196,150,.9)', 'stroke-width': '1.6', 'stroke-linecap': 'round', class: 'node-lock-scan'
+          });
+          lockScan.style.transformBox = 'fill-box';
+          lockScan.style.transformOrigin = 'center';
+          lockScan.style.filter = 'drop-shadow(0 0 10px rgba(255,140,60,.55))';
+          nodeGroup.appendChild(lockScan);
+
+          const lockScan2 = pathEl(`M ${node.x + 28} ${node.y} L ${node.x + node.w - 28} ${node.y}`, {
+            stroke: 'rgba(255,170,110,.55)', 'stroke-width': '1.2', 'stroke-linecap': 'round', class: 'node-lock-scan-2'
+          });
+          lockScan2.style.transformBox = 'fill-box';
+          lockScan2.style.transformOrigin = 'center';
+          nodeGroup.appendChild(lockScan2);
+
+          const lockText = textEl(node.x + node.w / 2, node.y + 1, '訊號中斷', {
+            'text-anchor': 'middle', fill: 'rgba(255,224,206,.84)', 'font-size': '13', 'font-weight': '700', 'letter-spacing': '4', class: 'node-lock-text'
+          });
+          lockText.style.textShadow = '0 0 10px rgba(255,120,48,.18)';
+          nodeGroup.appendChild(lockText);
+
+          const lockSubtext = textEl(node.x + node.w / 2, node.y + 20, '劇情未連接', {
+            'text-anchor': 'middle', fill: 'rgba(255,210,190,.4)', 'font-size': '9.5', 'font-weight': '600', 'letter-spacing': '2.2', class: 'node-lock-subtext'
+          });
+          lockSubtext.style.textShadow = '0 0 8px rgba(255,120,48,.08)';
+          nodeGroup.appendChild(lockSubtext);
+        }
+
+        svg.appendChild(nodeGroup);
+      });
+
+      svgWrap.innerHTML = '';
+      svgWrap.appendChild(svg);
+    }
+
+    function enableWheelHorizontalScroll() {
+      const scroller = document.getElementById('routeScroll');
+      scroller.addEventListener('wheel', (event) => {
+        if (scroller.scrollWidth <= scroller.clientWidth) return;
+        if (Math.abs(event.deltaY) >= Math.abs(event.deltaX)) {
+          scroller.scrollLeft += event.deltaY;
+          event.preventDefault();
+        }
+      }, { passive: false });
+    }
+
+    render();
+    enableWheelHorizontalScroll();
+    bindLogModalEvents();
+  </script>
+</body>
+</html>

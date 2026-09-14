@@ -106,7 +106,7 @@ const characters = {
   },
   mary: {
     title: "瑪莉亞．薩圖恩 / Mary Sattan",
-    entry: "Team Subdola Lepus/001",
+    entry: "Team Subdola Lepus/002",
     job: "傭兵特工/指揮&輔助",
     camp: "UN聯合/波拉里斯傭兵培育學園",
     summary: "在隊伍中擔當智囊、智商超群高達135，但身體脆弱、只有隻眼能見，有時候會露出幼稚一面的小隊隊長。",
@@ -137,7 +137,7 @@ const characters = {
   },
   rozelia: {
     title: "洛潔莉雅．米莉雅姆 / Rozelia．Miriam",
-    entry: "Team Subdola Lepus/001",
+    entry: "Team Subdola Lepus/004",
     job: "假釋契約特工/戰士",
     camp: "UN聯合/舊式波拉里斯傭兵培育學園",
     summary: "波拉里斯學園的第10屆畢業生，同時也是舊式波拉里斯最後一屆的畢業生。5年前因故背叛了UN從而導致被收監觀察，至今仍不明白為何會發生這種事情，被姜美英假釋出來後致力尋找原因。",
@@ -167,16 +167,17 @@ const characters = {
 
 const params = new URLSearchParams(window.location.search);
 const id = params.get("id");
-const rawData = characters[id];
+const rawData = Object.prototype.hasOwnProperty.call(characters, id) ? characters[id] : null;
 
 if (!rawData) {
-  window.location.href = "character-list.html";
-}
+  window.location.href = "dashboard.html";
+} else {
 
 const data = {
   ...DEFAULT_PORTRAIT,
   ...rawData,
-  tags: Array.isArray(rawData.tags) ? rawData.tags : []
+  tags: Array.isArray(rawData.tags) ? rawData.tags : [],
+  recommendedImages: Array.isArray(rawData.recommendedImages) ? rawData.recommendedImages : []
 };
 
 document.title = `${data.title}｜角色檔案`;
@@ -225,6 +226,9 @@ function createDesignTalkPanel() {
   analysisGrid.insertBefore(designPanel, tagPanel);
 }
 
+document.getElementById("subjectNumber").textContent = data.record;
+document.getElementById("fileSubjectNumber").textContent = data.record.replace(/^TSL-/, "");
+document.getElementById("subjectLabel").textContent = "SUBJECT / " + data.record.replace(/^TSL-/, "");
 entryCode.textContent = data.entry;
 characterName.textContent = data.title;
 jobText.textContent = `職業：${data.job}`;
@@ -245,7 +249,7 @@ if (designTalkText) {
   designTalkText.textContent = data.designTalk || "暫無角色雜談設計紀錄。";
 }
 
-portraitImage.src = data.image || "";
+// Assign the image after registering load/error handlers below.
 portraitImage.alt = data.fullName || "角色立繪";
 const portraitFrame = portraitImage?.closest(".portrait");
 const portraitPlaceholder = document.getElementById("portraitPlaceholder");
@@ -303,6 +307,7 @@ if (portraitImage) {
   }
 }
 
+if (portraitImage.complete && portraitImage.naturalWidth) applyPortraitLayout();
 window.addEventListener("resize", applyPortraitLayout);
 symbolSwatch.style.background =
   `linear-gradient(90deg, rgba(255,255,255,0.08), ${data.symbolColor})`;
@@ -315,3 +320,42 @@ data.tags.forEach((tag) => {
   chip.textContent = tag;
   tagList.appendChild(chip);
 });
+
+renderRecommendedImages(data.recommendedImages);
+}
+
+// Optional per-character field: recommendedImages: ["images/existing-file.png"]
+// or [{ src: "images/existing-file.png", alt: "圖片說明" }]. No sample paths are populated.
+function renderRecommendedImages(records) {
+  const strip = document.getElementById("visualRecords");
+  const empty = document.getElementById("visualRecordsEmpty");
+  const count = document.getElementById("visualRecordCount");
+  strip.replaceChildren();
+  const loaded = new Map();
+  const refresh = () => {
+    const items = [...loaded.entries()].sort((a,b) => a[0] - b[0]).map(([,item]) => item);
+    strip.replaceChildren(...items);
+    strip.hidden = items.length === 0;
+    empty.hidden = items.length > 0;
+    count.textContent = String(items.length).padStart(2,"0") + " FILES";
+  };
+  refresh();
+  records.forEach((record, index) => {
+    const src = typeof record === "string" ? record : record?.src;
+    if (typeof src !== "string" || !/^(?:\.\/)?images\/[^?#]+$/i.test(src) || src.split("/").includes("..")) return;
+    const item = document.createElement("a");
+    item.className = "visual-item";
+    item.href = src;
+    item.target = "_blank";
+    item.rel = "noopener";
+    const img = document.createElement("img");
+    img.alt = typeof record?.alt === "string" ? record.alt : "RELATED VISUAL RECORD / " + String(index + 1).padStart(2,"0");
+    const label = document.createElement("span");
+    label.className = "image-code";
+    label.textContent = "IMG / " + String(index + 1).padStart(2,"0");
+    item.append(img, label);
+    img.onload = () => { loaded.set(index, item); refresh(); };
+    img.onerror = () => { loaded.delete(index); refresh(); };
+    img.src = src;
+  });
+}

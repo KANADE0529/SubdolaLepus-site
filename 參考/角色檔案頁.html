@@ -1,4 +1,11 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SUBJECT FILE PREVIEW</title>
 
+<style>
 *{
   box-sizing:border-box;
 }
@@ -101,7 +108,7 @@ body{
 
   color:var(--text);
 
-  font-size:calc(10px + 2pt);
+  font-size:10px;
 
   letter-spacing:.12em;
 }
@@ -183,7 +190,7 @@ body{
 
   color:var(--sub);
 
-  font-size:calc(9px + 2pt);
+  font-size:9px;
 }
 
 .toolbar-tag{
@@ -193,7 +200,7 @@ body{
 
   color:var(--accent);
 
-  font-size:calc(8px + 2pt);
+  font-size:8px;
 }
 
 
@@ -223,7 +230,7 @@ body{
 .subject-label{
   color:var(--accent);
 
-  font-size:calc(10px + 2pt);
+  font-size:10px;
 
   letter-spacing:.18em;
 }
@@ -233,13 +240,13 @@ body{
 
   color:var(--sub);
 
-  font-size:calc(8px + 2pt);
+  font-size:8px;
 }
 
 .character-name{
   margin:10px 0 8px;
 
-  font-size:calc(34px + 2pt);
+  font-size:34px;
 
   font-weight:500;
 }
@@ -260,7 +267,7 @@ body{
 
   color:var(--sub);
 
-  font-size:calc(8px + 2pt);
+  font-size:8px;
 }
 
 .file-summary{
@@ -270,7 +277,7 @@ body{
 
   color:var(--sub);
 
-  font-size:calc(10px + 2pt);
+  font-size:10px;
 
   line-height:1.9;
 }
@@ -286,7 +293,7 @@ body{
 
   color:var(--sub);
 
-  font-size:calc(8px + 2pt);
+  font-size:8px;
 }
 
 .file-id strong{
@@ -296,7 +303,7 @@ body{
 
   color:var(--accent);
 
-  font-size:calc(30px + 2pt);
+  font-size:30px;
 
   font-weight:400;
 }
@@ -337,7 +344,7 @@ body{
 
   color:var(--sub);
 
-  font-size:calc(8px + 2pt);
+  font-size:8px;
 
   letter-spacing:.1em;
 
@@ -359,7 +366,7 @@ body{
 
   color:#7e6d54;
 
-  font-size:calc(13px + 2pt);
+  font-size:13px;
 }
 
 .info-area{
@@ -383,7 +390,7 @@ body{
 
   color:var(--accent);
 
-  font-size:calc(8px + 2pt);
+  font-size:8px;
 
   letter-spacing:.14em;
 
@@ -415,7 +422,7 @@ body{
 .data-item .label{
   color:var(--sub);
 
-  font-size:calc(8px + 2pt);
+  font-size:8px;
 
   margin-bottom:10px;
 }
@@ -423,7 +430,7 @@ body{
 .data-item .value{
   color:var(--text);
 
-  font-size:calc(12px + 2pt);
+  font-size:12px;
 }
 
 
@@ -451,7 +458,7 @@ body{
 
   color:var(--sub);
 
-  font-size:calc(8px + 2pt);
+  font-size:8px;
 }
 
 .status-item strong{
@@ -461,7 +468,7 @@ body{
 
   color:var(--text);
 
-  font-size:calc(10px + 2pt);
+  font-size:10px;
 
   font-weight:400;
 }
@@ -478,7 +485,7 @@ body{
 
 .symbol-row span{
   color:var(--sub);
-  font-size:calc(8px + 2pt);
+  font-size:8px;
 }
 
 .symbol-swatch{
@@ -520,7 +527,7 @@ body{
 .visual-head strong{
   color:var(--accent);
 
-  font-size:calc(8px + 2pt);
+  font-size:8px;
 
   letter-spacing:.14em;
 
@@ -530,7 +537,7 @@ body{
 .visual-head span{
   color:var(--sub);
 
-  font-size:calc(8px + 2pt);
+  font-size:8px;
 }
 
 .visual-scroll{
@@ -606,6 +613,64 @@ body{
 }
 
 
+/* 預覽用假圖片 */
+.fake-img{
+  width:100%;
+  height:100%;
+
+  display:grid;
+  place-items:center;
+
+  color:rgba(255,255,255,.22);
+
+  font-size:24px;
+}
+
+.fake-1{
+  background:
+    linear-gradient(
+      135deg,
+      #816d4d,
+      #342b20
+    );
+}
+
+.fake-2{
+  background:
+    linear-gradient(
+      135deg,
+      #5d4938,
+      #271e1a
+    );
+}
+
+.fake-3{
+  background:
+    linear-gradient(
+      135deg,
+      #8b7450,
+      #403123
+    );
+}
+
+.fake-4{
+  background:
+    linear-gradient(
+      135deg,
+      #6f5940,
+      #30271d
+    );
+}
+
+.fake-5{
+  background:
+    linear-gradient(
+      135deg,
+      #76524c,
+      #2d211f
+    );
+}
+
 .image-code{
   position:absolute;
 
@@ -620,7 +685,7 @@ body{
 
   color:var(--sub);
 
-  font-size:calc(7px + 2pt);
+  font-size:7px;
 }
 
 
@@ -661,7 +726,7 @@ body{
 .record-head strong{
   color:var(--text);
 
-  font-size:calc(10px + 2pt);
+  font-size:10px;
 
   font-weight:400;
 }
@@ -669,7 +734,7 @@ body{
 .record-head span{
   color:var(--sub);
 
-  font-size:calc(8px + 2pt);
+  font-size:8px;
 }
 
 .record-body{
@@ -677,7 +742,7 @@ body{
 
   color:var(--sub);
 
-  font-size:calc(10px + 2pt);
+  font-size:10px;
 
   line-height:2;
 }
@@ -699,7 +764,7 @@ body{
 
   color:var(--text);
 
-  font-size:calc(9px + 2pt);
+  font-size:9px;
 }
 
 
@@ -722,7 +787,7 @@ body{
 
   color:var(--sub);
 
-  font-size:calc(8px + 2pt);
+  font-size:8px;
 }
 
 
@@ -769,7 +834,7 @@ body{
 @media(max-width:560px){
 
   .character-name{
-    font-size:calc(27px + 2pt);
+    font-size:27px;
   }
 
   .data-table{
@@ -811,16 +876,430 @@ body{
   }
 }
 
+</style>
+</head>
 
-/* Existing portrait placement and complete record text. */
-.portrait { position:relative; overflow:hidden; }
-.portrait img { position:absolute; display:block; max-width:none; max-height:none; left:0; top:0; transform-origin:center center; }
-.portrait img[hidden], [hidden] { display:none; }
-#descriptionText, #designTalkText, #summaryText { white-space:pre-wrap; overflow-wrap:anywhere; }
-.value,.character-name,.entry-code { overflow-wrap:anywhere; }
-.profile-main > *, .file-head > *, .info-area { min-width:0; }
-.path { min-width:0; overflow-wrap:anywhere; }
-.visual-empty { padding:24px 12px; color:var(--sub); font-size:calc(10px + 2pt); line-height:1.8; }
-.visual-item { display:block; text-decoration:none; }
-.window-controls button:focus-visible,.nav-btn:focus-visible,.visual-item:focus-visible,.visual-scroll:focus-visible { outline:2px solid var(--accent); outline-offset:-2px; }
-@media(max-width:560px) { .window-title { font-size:calc(9px + 2pt); letter-spacing:.05em; } .toolbar { flex-wrap:wrap; } }
+
+<body>
+
+<div class="file-window">
+
+
+  <!-- TITLE -->
+
+  <header class="titlebar">
+
+    <div class="window-title">
+      SUBJECT FILE / PERSONNEL RECORD
+    </div>
+
+    <div class="window-controls">
+
+      <button>
+        —
+      </button>
+
+      <button>
+        ×
+      </button>
+
+    </div>
+
+  </header>
+
+
+  <!-- TOOLBAR -->
+
+  <div class="toolbar">
+
+    <button class="nav-btn">
+      ←
+    </button>
+
+    <div class="path">
+      ARCHIVE-01:\SUBJECTS\
+      <strong>004</strong>
+    </div>
+
+    <div class="toolbar-tag">
+      CLEARANCE / L-02
+    </div>
+
+  </div>
+
+
+  <!-- HEADER -->
+
+  <section class="file-head">
+
+    <div>
+
+      <div class="subject-label">
+        SUBJECT / 004
+      </div>
+
+      <div class="entry-code">
+        Subject Report / Entry RZ-04
+      </div>
+
+      <h1 class="character-name">
+        洛潔莉雅‧米莉雅姆
+      </h1>
+
+      <div class="file-tags">
+
+        <span class="pill">
+          職業：---
+        </span>
+
+        <span class="pill">
+          陣營：---
+        </span>
+
+      </div>
+
+      <p class="file-summary">
+        這裡放角色摘要。這一區維持檔案抬頭的感覺，
+        不會再切成一堆小卡片。
+      </p>
+
+    </div>
+
+
+    <div class="file-id">
+
+      SUBJECT FILE
+
+      <strong>
+        004
+      </strong>
+
+      ARCHIVE-01
+
+    </div>
+
+  </section>
+
+
+  <!-- MAIN -->
+
+  <section class="profile-main">
+
+
+    <!-- LEFT PHOTO -->
+
+    <section class="photo-panel">
+
+      <div class="panel-caption">
+
+        <span>
+          PERSONNEL PHOTO
+        </span>
+
+        <span>
+          IMG / PRIMARY
+        </span>
+
+      </div>
+
+      <div class="portrait">
+        角色立繪
+      </div>
+
+    </section>
+
+
+    <!-- RIGHT SIDE -->
+
+    <div class="info-area">
+
+
+      <!-- BASIC INFO -->
+
+      <section class="info-block">
+
+        <div class="info-title">
+          PERSONNEL INFORMATION
+        </div>
+
+        <div class="data-table">
+
+          <div class="data-item">
+            <div class="label">
+              姓名 / NAME
+            </div>
+            <div class="value">
+              洛潔莉雅‧米莉雅姆
+            </div>
+          </div>
+
+          <div class="data-item">
+            <div class="label">
+              年齡 / AGE
+            </div>
+            <div class="value">
+              ---
+            </div>
+          </div>
+
+          <div class="data-item">
+            <div class="label">
+              身高 / HEIGHT
+            </div>
+            <div class="value">
+              ---
+            </div>
+          </div>
+
+          <div class="data-item">
+            <div class="label">
+              身分 / IDENTITY
+            </div>
+            <div class="value">
+              ---
+            </div>
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <!-- STATUS -->
+
+      <section class="info-block">
+
+        <div class="info-title">
+          FILE STATUS
+        </div>
+
+        <div class="status-grid">
+
+          <div class="status-item">
+            <span>STATUS</span>
+            <strong>ACTIVE</strong>
+          </div>
+
+          <div class="status-item">
+            <span>THREAT</span>
+            <strong>---</strong>
+          </div>
+
+          <div class="status-item">
+            <span>RECORD</span>
+            <strong>RZ-04</strong>
+          </div>
+
+        </div>
+
+        <div class="symbol-row">
+
+          <span>
+            SYMBOL COLOR
+          </span>
+
+          <div class="symbol-swatch"></div>
+
+        </div>
+
+      </section>
+
+
+      <!-- NEW IMAGE SECTION -->
+
+      <section class="visual-block">
+
+        <div class="visual-head">
+
+          <strong>
+            RELATED VISUAL RECORDS
+          </strong>
+
+          <span>
+            05 FILES
+          </span>
+
+        </div>
+
+
+        <div class="visual-scroll">
+
+
+          <div class="visual-item">
+
+            <div class="fake-img fake-1">
+              01
+            </div>
+
+            <div class="image-code">
+              IMG / 01
+            </div>
+
+          </div>
+
+
+          <div class="visual-item">
+
+            <div class="fake-img fake-2">
+              02
+            </div>
+
+            <div class="image-code">
+              IMG / 02
+            </div>
+
+          </div>
+
+
+          <div class="visual-item">
+
+            <div class="fake-img fake-3">
+              03
+            </div>
+
+            <div class="image-code">
+              IMG / 03
+            </div>
+
+          </div>
+
+
+          <div class="visual-item">
+
+            <div class="fake-img fake-4">
+              04
+            </div>
+
+            <div class="image-code">
+              IMG / 04
+            </div>
+
+          </div>
+
+
+          <div class="visual-item">
+
+            <div class="fake-img fake-5">
+              05
+            </div>
+
+            <div class="image-code">
+              IMG / 05
+            </div>
+
+          </div>
+
+
+        </div>
+
+      </section>
+
+
+    </div>
+
+  </section>
+
+
+  <!-- RECORDS -->
+
+  <div class="records">
+
+
+    <section class="record-section">
+
+      <div class="record-head">
+
+        <strong>
+          角色描述
+        </strong>
+
+        <span>
+          DESCRIPTION RECORD
+        </span>
+
+      </div>
+
+      <div class="record-body">
+        這裡是角色描述內容。正式版本會接回原本資料。
+      </div>
+
+    </section>
+
+
+    <section class="record-section">
+
+      <div class="record-head">
+
+        <strong>
+          特徵標籤
+        </strong>
+
+        <span>
+          SUBJECT TAGS
+        </span>
+
+      </div>
+
+      <div class="record-body">
+
+        <div class="chips">
+
+          <span class="chip">
+            TAG / SAMPLE
+          </span>
+
+          <span class="chip">
+            TAG / SAMPLE
+          </span>
+
+          <span class="chip">
+            TAG / SAMPLE
+          </span>
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <section class="record-section">
+
+      <div class="record-head">
+
+        <strong>
+          角色雜談設計
+        </strong>
+
+        <span>
+          DESIGN NOTES
+        </span>
+
+      </div>
+
+      <div class="record-body">
+        這裡放原本的角色雜談設計內容。
+      </div>
+
+    </section>
+
+
+  </div>
+
+
+  <footer class="statusbar">
+
+    <span>
+      PERSONNEL RECORD / ARCHIVE-01
+    </span>
+
+    <span>
+      CLEARANCE / L-02 · STATUS / SYNCED
+    </span>
+
+  </footer>
+
+</div>
+
+</body>
+</html>

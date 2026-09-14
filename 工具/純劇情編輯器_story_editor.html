@@ -1,0 +1,1282 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>純劇情編輯器</title>
+  <style>
+    :root {
+      --bg: #070b12;
+      --panel: rgba(12, 11, 14, 0.96);
+      --frame: rgba(220, 120, 48, 0.24);
+      --frame-strong: rgba(255, 160, 90, 0.38);
+      --text-main: #fff3ea;
+      --text-dim: rgba(255, 210, 185, 0.46);
+      --danger: rgba(160, 42, 32, 0.86);
+      --danger-border: rgba(255, 120, 100, 0.28);
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      background: var(--bg);
+      color: var(--text-main);
+      font-family: Arial, "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+    }
+
+    body {
+      position: relative;
+      overflow: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      opacity: 0.12;
+      background-image:
+        linear-gradient(rgba(255,140,60,.18) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,140,60,.18) 1px, transparent 1px),
+        linear-gradient(rgba(255,140,60,.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,140,60,.06) 1px, transparent 1px);
+      background-size: 36px 36px, 36px 36px, 12px 12px, 12px 12px;
+      pointer-events: none;
+    }
+
+    button, input, select, textarea { font: inherit; }
+
+    .page {
+      position: relative;
+      z-index: 1;
+      height: 100vh;
+      padding: 24px;
+      overflow: hidden;
+    }
+
+    .shell {
+      max-width: 1720px;
+      height: calc(100vh - 48px);
+      margin: 0 auto;
+      border-radius: 30px;
+      overflow: hidden;
+      border: 1px solid var(--frame);
+      background: linear-gradient(180deg, rgba(14,12,14,.98), rgba(8,9,12,.98));
+      box-shadow: 0 0 0 1px rgba(255,170,120,.06) inset, 0 0 72px rgba(120,40,10,.24);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .shell-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 18px 24px;
+      border-bottom: 1px solid rgba(220,120,48,.18);
+      background: linear-gradient(90deg, rgba(200,90,28,.12), rgba(0,0,0,0));
+    }
+
+    .eyebrow {
+      font-size: 11px;
+      letter-spacing: .34em;
+      text-transform: uppercase;
+      color: rgba(240,176,138,.52);
+    }
+
+    .title {
+      margin: 8px 0 4px;
+      font-size: 30px;
+      font-weight: 700;
+      letter-spacing: .08em;
+    }
+
+    .subtitle {
+      font-size: 12px;
+      letter-spacing: .24em;
+      text-transform: uppercase;
+      color: rgba(255,210,185,.52);
+    }
+
+    .mode-switch {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      justify-content: flex-end;
+    }
+
+    .btn {
+      padding: 10px 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(220,120,48,.18);
+      background: rgba(24,16,13,.72);
+      color: #ffece1;
+      cursor: pointer;
+      transition: transform .18s ease, border-color .18s ease, background .18s ease;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      border-color: rgba(255,160,90,.34);
+      background: rgba(54,28,17,.78);
+    }
+
+    .btn.primary {
+      background: linear-gradient(180deg, rgba(120,48,18,.78), rgba(54,24,15,.88));
+      border-color: rgba(255,170,100,.42);
+    }
+
+    .btn.danger {
+      background: var(--danger);
+      border-color: var(--danger-border);
+    }
+
+    .btn.active {
+      background: linear-gradient(180deg, rgba(120,48,18,.86), rgba(64,28,17,.94));
+      border-color: rgba(255,170,100,.46);
+      box-shadow: 0 0 16px rgba(200,90,28,.18);
+    }
+
+    .mode-panel { display: none; flex: 1; min-height: 0; }
+    .mode-panel.active { display: grid; }
+
+    .body {
+      display: grid;
+      grid-template-columns: 430px minmax(0, 1fr);
+      flex: 1;
+      min-height: 0;
+    }
+
+    .sidebar {
+      padding: 20px;
+      border-right: 1px solid rgba(220,120,48,.14);
+      background: linear-gradient(180deg, rgba(20,14,12,.84), rgba(12,11,13,.74));
+      overflow: auto;
+      min-height: 0;
+    }
+
+    .main {
+      display: grid;
+      grid-template-rows: minmax(0, 1fr) minmax(280px, 0.85fr);
+      min-width: 0;
+      min-height: 0;
+    }
+
+    .editor-pane,
+    .json-pane {
+      border-top: 1px solid rgba(220,120,48,.14);
+      background: rgba(14, 12, 14, 0.78);
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .section-title {
+      margin: 0 0 14px;
+      font-size: 11px;
+      letter-spacing: .28em;
+      text-transform: uppercase;
+      color: rgba(255,210,185,.48);
+    }
+
+    .field { margin-bottom: 16px; }
+
+    .field-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 12px;
+      color: rgba(255,220,198,.76);
+      letter-spacing: .08em;
+    }
+
+    .input,
+    .select,
+    .textarea {
+      width: 100%;
+      border: 1px solid rgba(220,120,48,.18);
+      border-radius: 14px;
+      background: rgba(22,16,15,.86);
+      color: #fff0e8;
+      padding: 12px 14px;
+      outline: none;
+    }
+
+    .input,
+    .select { min-height: 48px; }
+
+    .textarea {
+      min-height: 220px;
+      resize: none;
+      line-height: 1.8;
+      white-space: pre-wrap;
+      overflow: auto;
+    }
+
+    .input:focus,
+    .select:focus,
+    .textarea:focus {
+      border-color: var(--frame-strong);
+      box-shadow: 0 0 0 1px rgba(255,170,100,.16) inset;
+    }
+
+    .json-textarea {
+      min-height: 0;
+      height: 100%;
+      resize: none;
+      line-height: 1.7;
+      white-space: pre;
+      font-family: Consolas, monospace;
+      font-size: 13px;
+    }
+
+    .stack,
+    .inline-actions,
+    .raw-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .status {
+      margin-top: 12px;
+      min-height: 20px;
+      color: rgba(255,220,198,.74);
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    .hint {
+      margin-top: 8px;
+      font-size: 12px;
+      color: var(--text-dim);
+      line-height: 1.7;
+    }
+
+    .divider {
+      height: 1px;
+      background: rgba(220,120,48,.12);
+      margin: 18px 0;
+    }
+
+    .editor-grow {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+      margin-bottom: 0;
+    }
+
+    .editor-grow .textarea {
+      flex: 1;
+      min-height: 0;
+    }
+
+    .raw-toolbar { margin-bottom: 12px; }
+
+    .chip-list {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 4px;
+      margin-bottom: 10px;
+    }
+
+    .chip {
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(220,120,48,.16);
+      background: rgba(255,140,60,.05);
+      color: rgba(255,220,198,.76);
+      font-size: 12px;
+    }
+
+    .sidebar::-webkit-scrollbar,
+    .textarea::-webkit-scrollbar,
+    .json-pane::-webkit-scrollbar,
+    .editor-pane::-webkit-scrollbar {
+      width: 10px;
+      height: 10px;
+    }
+
+    .sidebar::-webkit-scrollbar-track,
+    .textarea::-webkit-scrollbar-track,
+    .json-pane::-webkit-scrollbar-track,
+    .editor-pane::-webkit-scrollbar-track {
+      background: rgba(20,14,12,.6);
+      border-radius: 10px;
+    }
+
+    .sidebar::-webkit-scrollbar-thumb,
+    .textarea::-webkit-scrollbar-thumb,
+    .json-pane::-webkit-scrollbar-thumb,
+    .editor-pane::-webkit-scrollbar-thumb {
+      background: linear-gradient(180deg, rgba(255,140,60,.6), rgba(200,80,30,.6));
+      border-radius: 10px;
+      border: 1px solid rgba(255,180,120,.2);
+    }
+
+    @media (max-width: 1280px) {
+      .body { grid-template-columns: 1fr; }
+      .sidebar {
+        border-right: 0;
+        border-bottom: 1px solid rgba(220,120,48,.14);
+      }
+    }
+
+    @media (max-width: 900px) {
+      .page {
+        padding: 14px;
+        height: auto;
+        min-height: 100vh;
+      }
+      body { overflow-y: auto; }
+      .shell {
+        height: auto;
+        min-height: calc(100vh - 28px);
+      }
+      .shell-header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .mode-switch { justify-content: flex-start; }
+      .field-row { grid-template-columns: 1fr; }
+      .main { grid-template-rows: minmax(360px, 1fr) minmax(280px, 1fr); }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="shell">
+      <header class="shell-header">
+        <div>
+          <div class="eyebrow">Story Data Manager</div>
+          <h1 class="title">純劇情編輯器</h1>
+          <div class="subtitle">主線 storyData ＋ 檔案紀錄 LOG_PREVIEW_DATA</div>
+        </div>
+        <div class="mode-switch">
+          <button class="btn active" id="modeStoryBtn" type="button">主線 StoryData</button>
+          <button class="btn" id="modeLogBtn" type="button">檔案紀錄 LOG_PREVIEW_DATA</button>
+        </div>
+      </header>
+
+      <section class="mode-panel active" id="storyModePanel">
+        <div class="body">
+          <aside class="sidebar">
+            <h2 class="section-title">節點與章節</h2>
+
+            <div class="field">
+              <label class="label" for="storyNodeSelect">節點 ID</label>
+              <select class="select" id="storyNodeSelect"></select>
+            </div>
+
+            <div class="field-row">
+              <div class="field">
+                <label class="label" for="storyAreaInput">區域名稱</label>
+                <input class="input" id="storyAreaInput" type="text" />
+              </div>
+              <div class="field">
+                <label class="label" for="storySubtitleInput">副標</label>
+                <input class="input" id="storySubtitleInput" type="text" />
+              </div>
+            </div>
+
+            <div class="inline-actions">
+              <button class="btn primary" id="storySaveNodeBtn" type="button">儲存節點資訊</button>
+              <button class="btn" id="storyNewNodeBtn" type="button">建立空白節點</button>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="field">
+              <label class="label" for="storyEpisodeSelect">章節</label>
+              <select class="select" id="storyEpisodeSelect"></select>
+            </div>
+
+            <div class="field-row">
+              <div class="field">
+                <label class="label" for="storyEpisodeNoInput">章節編號</label>
+                <input class="input" id="storyEpisodeNoInput" type="text" />
+              </div>
+              <div class="field">
+                <label class="label" for="storyEpisodeLabelInput">章節標題</label>
+                <input class="input" id="storyEpisodeLabelInput" type="text" />
+              </div>
+            </div>
+
+            <div class="stack">
+              <button class="btn primary" id="storySaveEpisodeBtn" type="button">儲存章節</button>
+              <button class="btn" id="storyAddEpisodeBtn" type="button">新增章節</button>
+              <button class="btn danger" id="storyDeleteEpisodeBtn" type="button">刪除章節</button>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="stack">
+              <button class="btn" id="storySyncJsonBtn" type="button">同步到 JSON</button>
+              <button class="btn" id="storyApplyJsonBtn" type="button">套用 JSON</button>
+              <button class="btn primary" id="storyDownloadJsonBtn" type="button">下載 JSON</button>
+              <label class="btn" for="storyImportJsonInput">匯入 JSON</label>
+              <input id="storyImportJsonInput" type="file" accept="application/json" hidden />
+              <label class="btn" for="storyImportJsInput">匯入 JS</label>
+              <input id="storyImportJsInput" type="file" accept=".js,text/javascript,application/javascript" hidden />
+            </div>
+
+            <div class="status" id="storyStatusText">尚未變更。</div>
+            <div class="hint">這裡編的是你原本主線用的 <code>storyData</code> 結構。</div>
+          </aside>
+
+          <section class="main">
+            <div class="editor-pane">
+              <h2 class="section-title">章節內文</h2>
+              <div class="editor-grow">
+                <label class="label" for="storyEpisodeContentInput">內容</label>
+                <textarea class="textarea" id="storyEpisodeContentInput"></textarea>
+              </div>
+            </div>
+
+            <div class="json-pane">
+              <h2 class="section-title">JSON 原始資料</h2>
+              <textarea class="textarea json-textarea" id="storyJsonTextarea"></textarea>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section class="mode-panel" id="logModePanel">
+        <div class="body">
+          <aside class="sidebar">
+            <h2 class="section-title">檔案紀錄設定</h2>
+
+            <div class="field-row">
+              <div class="field">
+                <label class="label" for="logAreaInput">區塊名稱</label>
+                <input class="input" id="logAreaInput" type="text" />
+              </div>
+              <div class="field">
+                <label class="label" for="logSubtitleInput">副標</label>
+                <input class="input" id="logSubtitleInput" type="text" />
+              </div>
+            </div>
+
+            <div class="inline-actions">
+              <button class="btn primary" id="logSaveMetaBtn" type="button">儲存區塊資訊</button>
+            </div>
+
+            <div class="divider"></div>
+
+            <h2 class="section-title">視角群組</h2>
+            <div class="field">
+              <label class="label" for="logGroupSelect">視角</label>
+              <select class="select" id="logGroupSelect"></select>
+            </div>
+
+            <div class="field-row">
+              <div class="field">
+                <label class="label" for="logGroupIdInput">視角 ID</label>
+                <input class="input" id="logGroupIdInput" type="text" />
+              </div>
+              <div class="field">
+                <label class="label" for="logGroupLabelInput">顯示名稱</label>
+                <input class="input" id="logGroupLabelInput" type="text" />
+              </div>
+            </div>
+
+            <div class="stack">
+              <button class="btn primary" id="logSaveGroupBtn" type="button">儲存視角</button>
+              <button class="btn" id="logAddGroupBtn" type="button">新增視角</button>
+              <button class="btn danger" id="logDeleteGroupBtn" type="button">刪除視角</button>
+            </div>
+
+            <div class="divider"></div>
+
+            <h2 class="section-title">章節</h2>
+            <div class="field">
+              <label class="label" for="logEpisodeSelect">章節</label>
+              <select class="select" id="logEpisodeSelect"></select>
+            </div>
+
+            <div class="field-row">
+              <div class="field">
+                <label class="label" for="logEpisodeNoInput">章節編號</label>
+                <input class="input" id="logEpisodeNoInput" type="text" />
+              </div>
+              <div class="field">
+                <label class="label" for="logEpisodeLabelInput">章節標題</label>
+                <input class="input" id="logEpisodeLabelInput" type="text" />
+              </div>
+            </div>
+
+            <div class="stack">
+              <button class="btn primary" id="logSaveEpisodeBtn" type="button">儲存章節</button>
+              <button class="btn" id="logAddEpisodeBtn" type="button">新增章節</button>
+              <button class="btn danger" id="logDeleteEpisodeBtn" type="button">刪除章節</button>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="stack">
+              <button class="btn" id="logSyncJsBtn" type="button">同步到 JS</button>
+              <button class="btn" id="logApplyJsBtn" type="button">套用 JS</button>
+              <button class="btn primary" id="logDownloadJsBtn" type="button">下載 JS</button>
+              <label class="btn" for="logImportJsonInput">匯入 JSON</label>
+              <input id="logImportJsonInput" type="file" accept="application/json" hidden />
+              <label class="btn" for="logImportJsInput">匯入 JS</label>
+              <input id="logImportJsInput" type="file" accept=".js,text/javascript,application/javascript" hidden />
+            </div>
+
+            <div class="status" id="logStatusText">尚未變更。</div>
+            <div class="hint">這裡編的是 <code>default-file-records.html</code> 那種 <code>LOG_PREVIEW_DATA</code> 格式。</div>
+          </aside>
+
+          <section class="main">
+            <div class="editor-pane">
+              <h2 class="section-title">目前視角章節內容</h2>
+              <div class="chip-list" id="logGroupChipList"></div>
+              <div class="editor-grow">
+                <label class="label" for="logEpisodeContentInput">內容</label>
+                <textarea class="textarea" id="logEpisodeContentInput"></textarea>
+              </div>
+            </div>
+
+            <div class="json-pane">
+              <h2 class="section-title">LOG_PREVIEW_DATA / JSON</h2>
+              <div class="raw-toolbar">
+                <button class="btn" id="logShowJsonBtn" type="button">顯示 JSON</button>
+                <button class="btn" id="logShowJsBtn" type="button">顯示 JS</button>
+              </div>
+              <textarea class="textarea json-textarea" id="logJsTextarea"></textarea>
+            </div>
+          </section>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script id="initialStoryData" type="application/json">
+{
+  "g1-1": {
+    "area": "南極",
+    "subtitle": "起始章節",
+    "episodes": [
+      {
+        "no": "01",
+        "label": "冰原登入",
+        "content": "　　姜燕一行人在低溫暴風中進入南極外圍觀測區，初始掃描顯示周邊設施仍殘留低頻能源反應。\n\n　　瑪莉亞要求全隊保持短距離通訊鏈，戴莉則先行確認冰層下方的異常熱源。隊伍在視野極差的暴雪中逐步推進，並開始建立第一份作戰記錄。"
+      },
+      {
+        "no": "02",
+        "label": "異常訊號",
+        "content": "　　第二次檢測時，南極站點回傳了不屬於現有編碼庫的訊號片段。\n\n　　訊號來源短暫出現在地平線下方，像是某種仍在待命的舊型設施。姜燕決定先封存原始資料，避免在不明狀態下直接啟動連線。"
+      }
+    ]
+  },
+  "g1-3": {
+    "area": "賽騰城",
+    "subtitle": "主線開放",
+    "episodes": [
+      {
+        "no": "01",
+        "label": "入城檢查",
+        "content": "　　車隊抵達賽騰城外圍時，城牆下方的檢查哨仍維持半啟用狀態。"
+      }
+    ]
+  }
+}
+  </script>
+
+  <script id="initialLogPreviewData" type="application/json">
+{
+  "area": "普通檔案紀錄",
+  "subtitle": "Default File Record",
+  "viewGroups": [
+    { "id": "yan", "label": "姜燕" },
+    { "id": "maria", "label": "瑪莉亞" },
+    { "id": "daili", "label": "戴莉" },
+    { "id": "roselia", "label": "洛潔莉雅" },
+    { "id": "claire", "label": "克萊兒" },
+    { "id": "unknown", "label": "【未開放】" }
+  ],
+  "episodes": [
+    {
+      "no": "01",
+      "label": "山丘入口",
+      "content": {
+        "yan": "【姜燕】\n待補。",
+        "maria": "【瑪莉亞】\n待補。",
+        "daili": "【戴莉】\n待補。",
+        "roselia": "【洛潔莉雅】\n待補。",
+        "claire": "【克萊兒】\n待補。",
+        "unknown": "【存取限制】\n此視角資料已封鎖。"
+      }
+    }
+  ]
+}
+  </script>
+
+  <script>
+    const STORY_STORAGE_KEY = 'story_editor_data_v2';
+    const LOG_STORAGE_KEY = 'log_preview_editor_data_v1';
+
+    const FIXED_NODE_IDS = [
+      'g1-1', 'g1-2', 'g1-3', 'g1-4', 'g1-5', 'g1-6', 'g1-7',
+      'g2-1', 'g2-2', 'g2-3',
+      'g3-1', 'g3-1a', 'g3-2', 'g3-3', 'g3-4'
+    ];
+
+    const uiState = {
+      mode: 'story',
+      storyNodeId: FIXED_NODE_IDS[0],
+      storyEpisodeIndex: 0,
+      logEpisodeIndex: 0,
+      logGroupIndex: 0,
+      logRawMode: 'js'
+    };
+
+    let storyData = {};
+    let logPreviewData = {};
+
+    function setStatus(mode, text) {
+      document.getElementById(mode === 'story' ? 'storyStatusText' : 'logStatusText').textContent = text;
+    }
+
+    function getJsonScriptData(id) {
+      const el = document.getElementById(id);
+      if (!el) return {};
+      try {
+        return JSON.parse(el.textContent);
+      } catch (error) {
+        return {};
+      }
+    }
+
+    function parsePossibleJsObject(text) {
+      const raw = String(text || '').trim();
+      if (!raw) throw new Error('內容是空的');
+      if (raw.startsWith('{') || raw.startsWith('[')) return JSON.parse(raw);
+
+      const patterns = [
+        /(?:const|let|var)\s+\w+\s*=\s*([\s\S]*?);?\s*$/,
+        /window\.\w+\s*=\s*([\s\S]*?);?\s*$/,
+        /globalThis\.\w+\s*=\s*([\s\S]*?);?\s*$/,
+        /module\.exports\s*=\s*([\s\S]*?);?\s*$/,
+        /export\s+default\s+([\s\S]*?);?\s*$/,
+      ];
+
+      for (const pattern of patterns) {
+        const match = raw.match(pattern);
+        if (!match) continue;
+        const candidate = match[1].trim();
+        try {
+          return Function('"use strict"; return (' + candidate + ');')();
+        } catch (error) {}
+      }
+
+      try {
+        return Function('window', 'globalThis', 'module', 'exports', raw + '\n; return module.exports || exports.default || window.storyData || window.LOG_PREVIEW_DATA || window.default || globalThis.storyData || globalThis.LOG_PREVIEW_DATA || globalThis.default || null;')({}, {}, { exports: null }, {});
+      } catch (error) {
+        throw new Error('JS 解析失敗');
+      }
+    }
+
+    function normalizeStoryData(data) {
+      const source = data && typeof data === 'object' ? data : {};
+      const normalized = {};
+      Object.entries(source).forEach(([nodeId, entry]) => {
+        if (!entry || typeof entry !== 'object') return;
+        normalized[nodeId] = {
+          area: String(entry.area ?? ''),
+          subtitle: String(entry.subtitle ?? ''),
+          episodes: Array.isArray(entry.episodes)
+            ? entry.episodes.map((episode, index) => ({
+                no: String(episode?.no ?? String(index + 1).padStart(2, '0')),
+                label: String(episode?.label ?? '未命名章節 ' + (index + 1)),
+                content: String(episode?.content ?? '')
+              }))
+            : []
+        };
+      });
+      return normalized;
+    }
+
+    function normalizeLogPreviewData(data) {
+      const source = data && typeof data === 'object' ? data : {};
+      const viewGroups = Array.isArray(source.viewGroups)
+        ? source.viewGroups.map((group, index) => ({
+            id: String(group?.id ?? 'group' + (index + 1)),
+            label: String(group?.label ?? '視角 ' + (index + 1))
+          }))
+        : [];
+
+      const groupIds = viewGroups.map((group) => group.id);
+      const episodes = Array.isArray(source.episodes)
+        ? source.episodes.map((episode, index) => {
+            const content = {};
+            const rawContent = episode?.content && typeof episode.content === 'object' ? episode.content : {};
+            groupIds.forEach((id) => {
+              content[id] = String(rawContent[id] ?? '');
+            });
+            return {
+              no: String(episode?.no ?? String(index + 1).padStart(2, '0')),
+              label: String(episode?.label ?? '未命名章節 ' + (index + 1)),
+              content
+            };
+          })
+        : [];
+
+      return {
+        area: String(source.area ?? ''),
+        subtitle: String(source.subtitle ?? ''),
+        viewGroups,
+        episodes
+      };
+    }
+
+    function loadAllData() {
+      const savedStory = localStorage.getItem(STORY_STORAGE_KEY);
+      storyData = savedStory ? normalizeStoryData(JSON.parse(savedStory)) : normalizeStoryData(getJsonScriptData('initialStoryData'));
+
+      const savedLog = localStorage.getItem(LOG_STORAGE_KEY);
+      logPreviewData = savedLog ? normalizeLogPreviewData(JSON.parse(savedLog)) : normalizeLogPreviewData(getJsonScriptData('initialLogPreviewData'));
+    }
+
+    function saveStoryData() {
+      localStorage.setItem(STORY_STORAGE_KEY, JSON.stringify(storyData));
+    }
+
+    function saveLogData() {
+      localStorage.setItem(LOG_STORAGE_KEY, JSON.stringify(logPreviewData));
+    }
+
+    function ensureStoryNode(nodeId) {
+      if (!storyData[nodeId]) storyData[nodeId] = { area: '', subtitle: '', episodes: [] };
+      if (!Array.isArray(storyData[nodeId].episodes)) storyData[nodeId].episodes = [];
+    }
+
+    function ensureLogStructure() {
+      if (!Array.isArray(logPreviewData.viewGroups) || !logPreviewData.viewGroups.length) {
+        logPreviewData.viewGroups = [{ id: 'default', label: '預設視角' }];
+      }
+      if (!Array.isArray(logPreviewData.episodes) || !logPreviewData.episodes.length) {
+        logPreviewData.episodes = [{ no: '01', label: '新章節', content: { [logPreviewData.viewGroups[0].id]: '' } }];
+      }
+      logPreviewData.episodes.forEach((episode) => {
+        if (!episode.content || typeof episode.content !== 'object') episode.content = {};
+        logPreviewData.viewGroups.forEach((group) => {
+          if (typeof episode.content[group.id] !== 'string') episode.content[group.id] = '';
+        });
+      });
+    }
+
+    function getCurrentStoryNode() {
+      ensureStoryNode(uiState.storyNodeId);
+      return storyData[uiState.storyNodeId];
+    }
+
+    function getCurrentLogGroup() {
+      ensureLogStructure();
+      uiState.logGroupIndex = Math.max(0, Math.min(uiState.logGroupIndex, logPreviewData.viewGroups.length - 1));
+      return logPreviewData.viewGroups[uiState.logGroupIndex];
+    }
+
+    function getCurrentLogEpisode() {
+      ensureLogStructure();
+      uiState.logEpisodeIndex = Math.max(0, Math.min(uiState.logEpisodeIndex, logPreviewData.episodes.length - 1));
+      return logPreviewData.episodes[uiState.logEpisodeIndex];
+    }
+
+    function refreshStoryNodeOptions() {
+      const select = document.getElementById('storyNodeSelect');
+      select.innerHTML = '';
+      FIXED_NODE_IDS.forEach((nodeId) => {
+        const option = document.createElement('option');
+        option.value = nodeId;
+        option.textContent = nodeId;
+        select.appendChild(option);
+      });
+      select.value = uiState.storyNodeId;
+    }
+
+    function refreshStoryEpisodeOptions() {
+      const select = document.getElementById('storyEpisodeSelect');
+      const node = getCurrentStoryNode();
+      select.innerHTML = '';
+      if (!node.episodes.length) {
+        uiState.storyEpisodeIndex = -1;
+        const option = document.createElement('option');
+        option.value = '-1';
+        option.textContent = '尚無章節';
+        select.appendChild(option);
+        select.value = '-1';
+        return;
+      }
+      if (uiState.storyEpisodeIndex < 0 || uiState.storyEpisodeIndex >= node.episodes.length) uiState.storyEpisodeIndex = 0;
+      node.episodes.forEach((episode, index) => {
+        const option = document.createElement('option');
+        option.value = String(index);
+        option.textContent = episode.no + '｜' + episode.label;
+        select.appendChild(option);
+      });
+      select.value = String(uiState.storyEpisodeIndex);
+    }
+
+    function refreshStoryForm() {
+      const node = getCurrentStoryNode();
+      document.getElementById('storyAreaInput').value = node.area || '';
+      document.getElementById('storySubtitleInput').value = node.subtitle || '';
+      refreshStoryEpisodeOptions();
+      const episode = node.episodes[uiState.storyEpisodeIndex];
+      document.getElementById('storyEpisodeNoInput').value = episode?.no || '';
+      document.getElementById('storyEpisodeLabelInput').value = episode?.label || '';
+      document.getElementById('storyEpisodeContentInput').value = episode?.content || '';
+    }
+
+    function refreshStoryJson() {
+      document.getElementById('storyJsonTextarea').value = JSON.stringify(storyData, null, 2);
+    }
+
+    function storySaveNodeMeta() {
+      const node = getCurrentStoryNode();
+      node.area = document.getElementById('storyAreaInput').value.trim();
+      node.subtitle = document.getElementById('storySubtitleInput').value.trim();
+      saveStoryData();
+      refreshStoryJson();
+      setStatus('story', '已儲存節點 ' + uiState.storyNodeId + '。');
+    }
+
+    function storySaveEpisode() {
+      const node = getCurrentStoryNode();
+      if (uiState.storyEpisodeIndex < 0) {
+        node.episodes.push({ no: '01', label: '新章節', content: '' });
+        uiState.storyEpisodeIndex = node.episodes.length - 1;
+      }
+      node.episodes[uiState.storyEpisodeIndex] = {
+        no: document.getElementById('storyEpisodeNoInput').value.trim() || String(uiState.storyEpisodeIndex + 1).padStart(2, '0'),
+        label: document.getElementById('storyEpisodeLabelInput').value.trim() || '未命名章節',
+        content: document.getElementById('storyEpisodeContentInput').value
+      };
+      saveStoryData();
+      refreshStoryForm();
+      refreshStoryJson();
+      setStatus('story', '已儲存 ' + uiState.storyNodeId + ' 的章節。');
+    }
+
+    function storyAddEpisode() {
+      const node = getCurrentStoryNode();
+      const next = node.episodes.length + 1;
+      node.episodes.push({ no: String(next).padStart(2, '0'), label: '新章節 ' + next, content: '' });
+      uiState.storyEpisodeIndex = node.episodes.length - 1;
+      saveStoryData();
+      refreshStoryForm();
+      refreshStoryJson();
+      setStatus('story', '已新增 ' + uiState.storyNodeId + ' 的章節。');
+    }
+
+    function storyDeleteEpisode() {
+      const node = getCurrentStoryNode();
+      if (uiState.storyEpisodeIndex < 0 || !node.episodes.length) {
+        setStatus('story', '目前沒有可刪除的章節。');
+        return;
+      }
+      node.episodes.splice(uiState.storyEpisodeIndex, 1);
+      uiState.storyEpisodeIndex = Math.min(uiState.storyEpisodeIndex, node.episodes.length - 1);
+      saveStoryData();
+      refreshStoryForm();
+      refreshStoryJson();
+      setStatus('story', '已刪除 ' + uiState.storyNodeId + ' 的章節。');
+    }
+
+    function storyCreateBlankNode() {
+      ensureStoryNode(uiState.storyNodeId);
+      saveStoryData();
+      refreshStoryForm();
+      refreshStoryJson();
+      setStatus('story', '已建立 ' + uiState.storyNodeId + ' 的空白資料。');
+    }
+
+    function storySyncToJson() {
+      storySaveNodeMeta();
+      if (uiState.storyEpisodeIndex >= 0) storySaveEpisode();
+      refreshStoryJson();
+      setStatus('story', '表單內容已同步到 JSON。');
+    }
+
+    function storyApplyJson() {
+      const text = document.getElementById('storyJsonTextarea').value;
+      try {
+        storyData = normalizeStoryData(JSON.parse(text));
+        saveStoryData();
+        refreshStoryNodeOptions();
+        refreshStoryForm();
+        refreshStoryJson();
+        setStatus('story', '已成功套用 JSON。');
+      } catch (error) {
+        setStatus('story', 'JSON 套用失敗：' + error.message);
+      }
+    }
+
+    function downloadText(filename, text, type) {
+      const blob = new Blob([text], { type: type });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = filename;
+      anchor.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function refreshLogGroupOptions() {
+      const select = document.getElementById('logGroupSelect');
+      ensureLogStructure();
+      select.innerHTML = '';
+      uiState.logGroupIndex = Math.max(0, Math.min(uiState.logGroupIndex, logPreviewData.viewGroups.length - 1));
+      logPreviewData.viewGroups.forEach((group, index) => {
+        const option = document.createElement('option');
+        option.value = String(index);
+        option.textContent = group.id + '｜' + group.label;
+        select.appendChild(option);
+      });
+      select.value = String(uiState.logGroupIndex);
+    }
+
+    function refreshLogEpisodeOptions() {
+      const select = document.getElementById('logEpisodeSelect');
+      ensureLogStructure();
+      select.innerHTML = '';
+      uiState.logEpisodeIndex = Math.max(0, Math.min(uiState.logEpisodeIndex, logPreviewData.episodes.length - 1));
+      logPreviewData.episodes.forEach((episode, index) => {
+        const option = document.createElement('option');
+        option.value = String(index);
+        option.textContent = episode.no + '｜' + episode.label;
+        select.appendChild(option);
+      });
+      select.value = String(uiState.logEpisodeIndex);
+    }
+
+    function refreshLogChips() {
+      const wrap = document.getElementById('logGroupChipList');
+      wrap.innerHTML = '';
+      logPreviewData.viewGroups.forEach((group, index) => {
+        const chip = document.createElement('span');
+        chip.className = 'chip';
+        chip.textContent = index === uiState.logGroupIndex ? '目前視角：' + group.label : group.label;
+        wrap.appendChild(chip);
+      });
+    }
+
+    function logToJsString() {
+      return 'const LOG_PREVIEW_DATA = ' + JSON.stringify(logPreviewData, null, 2) + ';';
+    }
+
+    function refreshLogRaw() {
+      const textarea = document.getElementById('logJsTextarea');
+      textarea.value = uiState.logRawMode === 'json' ? JSON.stringify(logPreviewData, null, 2) : logToJsString();
+    }
+
+    function refreshLogForm() {
+      ensureLogStructure();
+      const group = getCurrentLogGroup();
+      const episode = getCurrentLogEpisode();
+      document.getElementById('logAreaInput').value = logPreviewData.area || '';
+      document.getElementById('logSubtitleInput').value = logPreviewData.subtitle || '';
+      refreshLogGroupOptions();
+      refreshLogEpisodeOptions();
+      document.getElementById('logGroupIdInput').value = group.id || '';
+      document.getElementById('logGroupLabelInput').value = group.label || '';
+      document.getElementById('logEpisodeNoInput').value = episode.no || '';
+      document.getElementById('logEpisodeLabelInput').value = episode.label || '';
+      document.getElementById('logEpisodeContentInput').value = episode.content[group.id] || '';
+      refreshLogChips();
+      refreshLogRaw();
+    }
+
+    function logSaveMeta() {
+      logPreviewData.area = document.getElementById('logAreaInput').value.trim();
+      logPreviewData.subtitle = document.getElementById('logSubtitleInput').value.trim();
+      saveLogData();
+      refreshLogRaw();
+      setStatus('log', '已儲存區塊資訊。');
+    }
+
+    function logSaveGroup() {
+      ensureLogStructure();
+      const group = getCurrentLogGroup();
+      const oldId = group.id;
+      const nextId = document.getElementById('logGroupIdInput').value.trim() || ('group' + (uiState.logGroupIndex + 1));
+      const nextLabel = document.getElementById('logGroupLabelInput').value.trim() || ('視角 ' + (uiState.logGroupIndex + 1));
+      group.id = nextId;
+      group.label = nextLabel;
+      logPreviewData.episodes.forEach((episode) => {
+        if (!episode.content || typeof episode.content !== 'object') episode.content = {};
+        if (oldId !== nextId) {
+          episode.content[nextId] = episode.content[oldId] ?? '';
+          delete episode.content[oldId];
+        }
+      });
+      saveLogData();
+      refreshLogForm();
+      setStatus('log', '已儲存視角資料。');
+    }
+
+    function logAddGroup() {
+      ensureLogStructure();
+      const next = logPreviewData.viewGroups.length + 1;
+      const newGroup = { id: 'group' + next, label: '新視角 ' + next };
+      logPreviewData.viewGroups.push(newGroup);
+      logPreviewData.episodes.forEach((episode) => {
+        episode.content[newGroup.id] = '';
+      });
+      uiState.logGroupIndex = logPreviewData.viewGroups.length - 1;
+      saveLogData();
+      refreshLogForm();
+      setStatus('log', '已新增視角。');
+    }
+
+    function logDeleteGroup() {
+      ensureLogStructure();
+      if (logPreviewData.viewGroups.length <= 1) {
+        setStatus('log', '至少保留一個視角。');
+        return;
+      }
+      const removed = getCurrentLogGroup();
+      logPreviewData.viewGroups.splice(uiState.logGroupIndex, 1);
+      logPreviewData.episodes.forEach((episode) => {
+        delete episode.content[removed.id];
+      });
+      uiState.logGroupIndex = Math.max(0, uiState.logGroupIndex - 1);
+      saveLogData();
+      refreshLogForm();
+      setStatus('log', '已刪除視角。');
+    }
+
+    function logSaveEpisode() {
+      ensureLogStructure();
+      const episode = getCurrentLogEpisode();
+      const group = getCurrentLogGroup();
+      episode.no = document.getElementById('logEpisodeNoInput').value.trim() || String(uiState.logEpisodeIndex + 1).padStart(2, '0');
+      episode.label = document.getElementById('logEpisodeLabelInput').value.trim() || ('章節 ' + (uiState.logEpisodeIndex + 1));
+      if (!episode.content || typeof episode.content !== 'object') episode.content = {};
+      episode.content[group.id] = document.getElementById('logEpisodeContentInput').value;
+      saveLogData();
+      refreshLogForm();
+      setStatus('log', '已儲存章節內容。');
+    }
+
+    function logAddEpisode() {
+      ensureLogStructure();
+      const next = logPreviewData.episodes.length + 1;
+      const content = {};
+      logPreviewData.viewGroups.forEach((group) => {
+        content[group.id] = '';
+      });
+      logPreviewData.episodes.push({ no: String(next).padStart(2, '0'), label: '新章節 ' + next, content: content });
+      uiState.logEpisodeIndex = logPreviewData.episodes.length - 1;
+      saveLogData();
+      refreshLogForm();
+      setStatus('log', '已新增章節。');
+    }
+
+    function logDeleteEpisode() {
+      ensureLogStructure();
+      if (logPreviewData.episodes.length <= 1) {
+        setStatus('log', '至少保留一個章節。');
+        return;
+      }
+      logPreviewData.episodes.splice(uiState.logEpisodeIndex, 1);
+      uiState.logEpisodeIndex = Math.max(0, uiState.logEpisodeIndex - 1);
+      saveLogData();
+      refreshLogForm();
+      setStatus('log', '已刪除章節。');
+    }
+
+    function logSyncToRaw() {
+      logSaveMeta();
+      logSaveGroup();
+      logSaveEpisode();
+      refreshLogRaw();
+      setStatus('log', '表單內容已同步到原始資料。');
+    }
+
+    function logApplyRaw() {
+      const text = document.getElementById('logJsTextarea').value;
+      try {
+        const parsed = parsePossibleJsObject(text);
+        logPreviewData = normalizeLogPreviewData(parsed);
+        uiState.logEpisodeIndex = 0;
+        uiState.logGroupIndex = 0;
+        saveLogData();
+        refreshLogForm();
+        setStatus('log', '已成功套用資料。');
+      } catch (error) {
+        setStatus('log', '套用失敗：' + error.message);
+      }
+    }
+
+    function switchMode(mode) {
+      uiState.mode = mode;
+      document.getElementById('modeStoryBtn').classList.toggle('active', mode === 'story');
+      document.getElementById('modeLogBtn').classList.toggle('active', mode === 'log');
+      document.getElementById('storyModePanel').classList.toggle('active', mode === 'story');
+      document.getElementById('logModePanel').classList.toggle('active', mode === 'log');
+    }
+
+    function bindStoryEvents() {
+      document.getElementById('storyNodeSelect').addEventListener('change', function (event) {
+        uiState.storyNodeId = event.target.value;
+        uiState.storyEpisodeIndex = 0;
+        refreshStoryForm();
+        setStatus('story', '已切換到節點 ' + uiState.storyNodeId + '。');
+      });
+
+      document.getElementById('storyEpisodeSelect').addEventListener('change', function (event) {
+        uiState.storyEpisodeIndex = Number(event.target.value);
+        refreshStoryForm();
+      });
+
+      document.getElementById('storySaveNodeBtn').addEventListener('click', storySaveNodeMeta);
+      document.getElementById('storyNewNodeBtn').addEventListener('click', storyCreateBlankNode);
+      document.getElementById('storySaveEpisodeBtn').addEventListener('click', storySaveEpisode);
+      document.getElementById('storyAddEpisodeBtn').addEventListener('click', storyAddEpisode);
+      document.getElementById('storyDeleteEpisodeBtn').addEventListener('click', storyDeleteEpisode);
+      document.getElementById('storySyncJsonBtn').addEventListener('click', storySyncToJson);
+      document.getElementById('storyApplyJsonBtn').addEventListener('click', storyApplyJson);
+      document.getElementById('storyDownloadJsonBtn').addEventListener('click', function () {
+        downloadText('story-log-data.json', JSON.stringify(storyData, null, 2), 'application/json');
+        setStatus('story', '已下載 JSON 檔。');
+      });
+
+      document.getElementById('storyImportJsonInput').addEventListener('change', function (event) {
+        const file = event.target.files?.[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function () {
+          document.getElementById('storyJsonTextarea').value = String(reader.result || '');
+          setStatus('story', '已載入 JSON 檔：' + file.name);
+        };
+        reader.readAsText(file, 'utf-8');
+        event.target.value = '';
+      });
+
+      document.getElementById('storyImportJsInput').addEventListener('change', function (event) {
+        const file = event.target.files?.[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function () {
+          try {
+            const parsed = parsePossibleJsObject(String(reader.result || ''));
+            storyData = normalizeStoryData(parsed);
+            saveStoryData();
+            refreshStoryNodeOptions();
+            refreshStoryForm();
+            refreshStoryJson();
+            setStatus('story', '已成功匯入 JS：' + file.name);
+          } catch (error) {
+            setStatus('story', 'JS 匯入失敗：' + error.message);
+          }
+        };
+        reader.readAsText(file, 'utf-8');
+        event.target.value = '';
+      });
+    }
+
+    function bindLogEvents() {
+      document.getElementById('logGroupSelect').addEventListener('change', function (event) {
+        uiState.logGroupIndex = Number(event.target.value);
+        refreshLogForm();
+      });
+
+      document.getElementById('logEpisodeSelect').addEventListener('change', function (event) {
+        uiState.logEpisodeIndex = Number(event.target.value);
+        refreshLogForm();
+      });
+
+      document.getElementById('logSaveMetaBtn').addEventListener('click', logSaveMeta);
+      document.getElementById('logSaveGroupBtn').addEventListener('click', logSaveGroup);
+      document.getElementById('logAddGroupBtn').addEventListener('click', logAddGroup);
+      document.getElementById('logDeleteGroupBtn').addEventListener('click', logDeleteGroup);
+      document.getElementById('logSaveEpisodeBtn').addEventListener('click', logSaveEpisode);
+      document.getElementById('logAddEpisodeBtn').addEventListener('click', logAddEpisode);
+      document.getElementById('logDeleteEpisodeBtn').addEventListener('click', logDeleteEpisode);
+      document.getElementById('logSyncJsBtn').addEventListener('click', logSyncToRaw);
+      document.getElementById('logApplyJsBtn').addEventListener('click', logApplyRaw);
+      document.getElementById('logShowJsonBtn').addEventListener('click', function () {
+        uiState.logRawMode = 'json';
+        refreshLogRaw();
+      });
+      document.getElementById('logShowJsBtn').addEventListener('click', function () {
+        uiState.logRawMode = 'js';
+        refreshLogRaw();
+      });
+      document.getElementById('logDownloadJsBtn').addEventListener('click', function () {
+        const text = uiState.logRawMode === 'json' ? JSON.stringify(logPreviewData, null, 2) : logToJsString();
+        downloadText(uiState.logRawMode === 'json' ? 'log-preview-data.json' : 'log-preview-data.js', text, uiState.logRawMode === 'json' ? 'application/json' : 'application/javascript');
+        setStatus('log', '已下載 ' + uiState.logRawMode.toUpperCase() + ' 檔。');
+      });
+
+      document.getElementById('logImportJsonInput').addEventListener('change', function (event) {
+        const file = event.target.files?.[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function () {
+          try {
+            logPreviewData = normalizeLogPreviewData(JSON.parse(String(reader.result || '')));
+            uiState.logEpisodeIndex = 0;
+            uiState.logGroupIndex = 0;
+            saveLogData();
+            refreshLogForm();
+            setStatus('log', '已成功匯入 JSON：' + file.name);
+          } catch (error) {
+            setStatus('log', 'JSON 匯入失敗：' + error.message);
+          }
+        };
+        reader.readAsText(file, 'utf-8');
+        event.target.value = '';
+      });
+
+      document.getElementById('logImportJsInput').addEventListener('change', function (event) {
+        const file = event.target.files?.[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function () {
+          try {
+            const parsed = parsePossibleJsObject(String(reader.result || ''));
+            logPreviewData = normalizeLogPreviewData(parsed);
+            uiState.logEpisodeIndex = 0;
+            uiState.logGroupIndex = 0;
+            saveLogData();
+            refreshLogForm();
+            setStatus('log', '已成功匯入 JS：' + file.name);
+          } catch (error) {
+            setStatus('log', 'JS 匯入失敗：' + error.message);
+          }
+        };
+        reader.readAsText(file, 'utf-8');
+        event.target.value = '';
+      });
+    }
+
+    function bindModeSwitch() {
+      document.getElementById('modeStoryBtn').addEventListener('click', function () { switchMode('story'); });
+      document.getElementById('modeLogBtn').addEventListener('click', function () { switchMode('log'); });
+    }
+
+    loadAllData();
+    refreshStoryNodeOptions();
+    refreshStoryForm();
+    refreshStoryJson();
+    refreshLogForm();
+    bindStoryEvents();
+    bindLogEvents();
+    bindModeSwitch();
+  </script>
+</body>
+</html>

@@ -353,7 +353,6 @@ body::after{
     font-size:34px;
   }
 }
-@media(max-width:780px), (max-height:650px) { body { overflow:auto; height:auto; min-height:100dvh; padding:16px 0; } .boot-wrap { margin:auto; flex-shrink:0; } .left { min-height:280px; } .topline { gap:16px; } }
 </style>
 </head>
 <body>
@@ -374,7 +373,7 @@ body::after{
       <h1 class="title">ARCHIVE NODE<br>STARTUP</h1>
       <div class="subtitle">
         啟動資料終端、索引快取與限制區域驗證模組。<br>
-        以訪客身分接入 ARCHIVE-01，瀏覽人物檔案、故事時間線與創作紀錄。
+        此畫面可作為網站的開機首頁、進入動畫頁，或跳轉到主終端前的前置頁面。
       </div>
 
       <div class="boot-panel">
@@ -424,7 +423,98 @@ body::after{
   <div class="corner">BOOT</div>
 </div>
 
-<script src="js/login.js"></script>
+<script>
+const progressFill = document.getElementById("progressFill");
+const percentText = document.getElementById("percentText");
+const statusText = document.getElementById("statusText");
+const enterArea = document.getElementById("enterArea");
+const logBox = document.getElementById("logBox");
+
+const logLines = [
+  ["[ OK ]  Establishing terminal core", "ok"],
+  ["[ OK ]  Mounting subject archive", "ok"],
+  ["[ OK ]  Syncing event records", "ok"],
+  ["[ OK ]  Loading IF / PARO branches", "ok"],
+  ["[ OK ]  Validating restricted sector", "warn"],
+  ["[ OK ]  Applying theme: DARK SAND GOLD", "ok"],
+  ["[ OK ]  Session key accepted", "ok"],
+  ["[DONE]  Startup sequence complete", "ok"]
+];
+
+const statusSteps = [
+  {p:8,  t:"Initializing core system..."},
+  {p:22, t:"Mounting archive storage..."},
+  {p:37, t:"Loading subject index..."},
+  {p:51, t:"Syncing records..."},
+  {p:68, t:"Checking branch data..."},
+  {p:84, t:"Verifying access permissions..."},
+  {p:100,t:"Boot complete. Terminal ready."}
+];
+
+let current = 0;
+let logIndex = 0;
+
+function appendLog(text, cls=""){
+  const line = document.createElement("div");
+  line.className = "log-line " + cls;
+  line.textContent = text;
+  logBox.appendChild(line);
+  logBox.scrollTop = logBox.scrollHeight;
+}
+
+function runBoot(){
+  const timer = setInterval(()=>{
+    current += Math.floor(Math.random() * 7) + 3;
+    if(current > 100) current = 100;
+
+    progressFill.style.width = current + "%";
+    percentText.textContent = current + "%";
+
+    for(const step of statusSteps){
+      if(current >= step.p){
+        statusText.textContent = step.t;
+      }
+    }
+
+    if(logIndex < logLines.length && current >= (logIndex + 1) * 12){
+      appendLog(logLines[logIndex][0], logLines[logIndex][1]);
+      logIndex++;
+    }
+
+    if(current >= 100){
+      clearInterval(timer);
+      while(logIndex < logLines.length){
+        appendLog(logLines[logIndex][0], logLines[logIndex][1]);
+        logIndex++;
+      }
+      enterArea.classList.add("show");
+    }
+  }, 260);
+}
+
+function updateClock(){
+  const text = new Date().toLocaleTimeString("zh-TW",{
+    hour:"2-digit",
+    minute:"2-digit"
+  });
+  document.getElementById("timeText").textContent = text;
+}
+
+function enterTerminal(){
+  /* 這裡改成你的主頁網址 */
+  window.location.href = "dashboard.html";
+}
+
+document.addEventListener("keydown",(e)=>{
+  if(e.key === "Enter" && enterArea.classList.contains("show")){
+    enterTerminal();
+  }
+});
+
+updateClock();
+setInterval(updateClock,10000);
+runBoot();
+</script>
 
 </body>
 </html>
